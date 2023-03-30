@@ -40,4 +40,18 @@ public class Node implements Comparable<Node> {
     public boolean equals(Object o) {
         return this.position.equals(((Node)o).position);
     }
+    
+    private float distanceTo(Node to) {
+        return (int)(Math.abs(this.position.x - to.position.x) +
+                Math.abs(this.position.y - to.position.y));
+    }
+
+    @Override
+    public String toString() {
+        return "Node{" +
+                "position=" + position +
+                ", cost=" + cost +
+                ", parent=" + parent +
+                '}';
+    }
 }
