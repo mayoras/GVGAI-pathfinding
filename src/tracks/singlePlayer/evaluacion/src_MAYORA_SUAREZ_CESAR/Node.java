@@ -1,6 +1,5 @@
 package tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR;
-
-
+import ontology.Types.ACTIONS;
 import tools.Vector2d;
 
 /**
@@ -10,6 +9,7 @@ public class Node implements Comparable<Node> {
     public Vector2d position;
     public int cost;
     public Node parent;
+    public ACTIONS parent_act;
     public int id;
 
     ////////// Constructors
@@ -17,9 +17,10 @@ public class Node implements Comparable<Node> {
         init(pos);
         this.parent = null;
     }
-    public Node(Vector2d pos, Node parent) {
+    public Node(Vector2d pos, Node parent, ACTIONS parent_act) {
         init(pos);
         this.parent = parent;
+        this.parent_act = parent_act;
     }
     private void init(Vector2d pos) {
         // TODO: Check if this is necessary, could consume precious time
