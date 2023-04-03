@@ -7,11 +7,9 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
-import javax.swing.plaf.nimbus.State;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.PriorityQueue;
-import java.util.Vector;
 
 /*
 TODO:
@@ -159,7 +157,7 @@ public class AgenteDijkstra extends AbstractPlayer {
     private boolean posIsValid(Vector2d pos) {
         // Check if it is a valid step position
         for (Vector2d w : this.walls) {
-            if (w == pos) {
+            if (w.equals(pos)) {
                 return false;
             }
         }
