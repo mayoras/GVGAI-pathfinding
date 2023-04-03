@@ -10,6 +10,7 @@ import tools.Vector2d;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.PriorityQueue;
+import java.util.Stack;
 
 /*
 TODO:
@@ -19,7 +20,7 @@ TODO:
 public class AgenteDijkstra extends AbstractPlayer {
     Vector2d scaleF;
     Vector2d portal;
-    ArrayList<ACTIONS> plan;
+    Stack<ACTIONS> plan;
 
     ArrayList<Vector2d> walls;
 
@@ -51,16 +52,15 @@ public class AgenteDijkstra extends AbstractPlayer {
         portal.x = Math.floor(portal.x / scaleF.x);
         portal.y = Math.floor(portal.y / scaleF.y);
 
-        this.plan = new ArrayList<>();
+        this.plan = new Stack<>();
     }
 
     @Override
     public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-        // If there's a route, follow it.
+        // If there's a path, follow it.
         if (!this.plan.isEmpty()) {
-            ACTIONS action = this.plan.get(0);
-            this.plan.remove(0);
-            return action;
+            ACTIONS next_act = this.plan.pop();
+            return next_act;
         }
 
         Vector2d avatar = new Vector2d(Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
@@ -74,20 +74,17 @@ public class AgenteDijkstra extends AbstractPlayer {
         frontier.add(new Node(avatar));
         System.out.println(avatar);
 
-        Node curr;
+        Node curr = null;
+        boolean found = false;
         while (!frontier.isEmpty()) {
-//            System.out.println("Frontier list size: " + frontier.size());
+            // Get current node
             curr = frontier.poll();
 
-            System.out.println("Nodo actual: " + curr);
-
-            if (frontier.contains(curr)) {
-                System.out.println("Contains something should be popped " + curr);
-                System.exit(1);
-            }
+            // System.out.println("Nodo actual: " + curr);
 
             // Check if it's the portal/goal
-            if (curr.position == this.portal) {
+            if (this.portal.equals(curr.position)) {
+                found = true;
                 break;
             }
 
@@ -103,7 +100,8 @@ public class AgenteDijkstra extends AbstractPlayer {
                         next_pos = new Vector2d(curr.position.x, curr.position.y - 1);
                         // Check if there's no a wall
                         if (posIsValid(next_pos)) {
-                            childNode = new Node(next_pos, curr);
+                            childNode = new Node(next_pos, curr, expandAction);
+                            // Check if it's already explored
                             if (!explored.contains(childNode)) {
                                 childNode.cost = curr.cost + 1;
                                 frontier.add(childNode);
@@ -115,7 +113,7 @@ public class AgenteDijkstra extends AbstractPlayer {
                         next_pos = new Vector2d(curr.position.x, curr.position.y + 1);
                         // Check if there's no a wall
                         if (posIsValid(next_pos)) {
-                            childNode = new Node(next_pos, curr);
+                            childNode = new Node(next_pos, curr, expandAction);
                             if (!explored.contains(childNode)) {
                                 childNode.cost = curr.cost + 1;
                                 frontier.add(childNode);
@@ -127,7 +125,7 @@ public class AgenteDijkstra extends AbstractPlayer {
                         next_pos = new Vector2d(curr.position.x - 1, curr.position.y);
                         // Check if there's no a wall
                         if (posIsValid(next_pos)) {
-                            childNode = new Node(next_pos, curr);
+                            childNode = new Node(next_pos, curr, expandAction);
                             if (!explored.contains(childNode)) {
                                 childNode.cost = curr.cost + 1;
                                 frontier.add(childNode);
@@ -138,7 +136,7 @@ public class AgenteDijkstra extends AbstractPlayer {
                     case ACTION_RIGHT -> {
                         next_pos = new Vector2d(curr.position.x + 1, curr.position.y);
                         if (posIsValid(next_pos)) {
-                            childNode = new Node(next_pos, curr);
+                            childNode = new Node(next_pos, curr, expandAction);
                             if (!explored.contains(childNode)) {
                                 childNode.cost = curr.cost + 1;
                                 frontier.add(childNode);
@@ -151,7 +149,25 @@ public class AgenteDijkstra extends AbstractPlayer {
             }
         }
 
+        // Rebuild path/plan
+        if (found) {
+            System.out.println("FOUND!\nTotal cost: " + curr.cost + " steps");
+            rebuildPath(curr);
+        }
+
         return ACTIONS.ACTION_NIL;
+    }
+
+    /**
+     * @brief Rebuild the path to get to the portal
+     * @param goal goal node
+     */
+    private void rebuildPath(Node goal) {
+        Node curr = goal;
+        while (curr.parent != null) {
+            this.plan.push(curr.parent_act);
+            curr = curr.parent;
+        }
     }
 
     private boolean posIsValid(Vector2d pos) {
