@@ -10,6 +10,7 @@ public class Node implements Comparable<Node> {
     public Vector2d position;
     public int cost;
     public Node parent;
+    public int id;
 
     ////////// Constructors
     public Node(Vector2d pos) {
@@ -24,21 +25,51 @@ public class Node implements Comparable<Node> {
         // TODO: Check if this is necessary, could consume precious time
         this.position = pos.copy();
         this.cost = 0;
+
+        // `id` depends on the Node's position, this is important for comparison between nodes
+        this.id = ((int)(this.position.x) * 100 + (int)(this.position.y));
     }
     ///////////
 
     @Override
     public int compareTo(Node other) {
-        if (this.cost < other.cost)
-            return -1;
-        if (this.cost > other.cost)
-            return 1;
-        return 0;
+        return Integer.compare(this.cost, other.cost);
     }
 
+    /**
+     * @brief Custom hashCode builder using the `id` as hashCode
+     * @return Node's `id` as the Node's hashCode
+     */
     @Override
-    public boolean equals(Object o) {
-        return this.position.equals(((Node)o).position);
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((this.position == null) ? 0 : this.id);
+        return result;
+    }
+
+    /**
+     * @brief Custom `equals` method for Node's position
+     * @param obj Comparison node
+     * @return `true` if obj is equal to this, `false` otherwise.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (!(obj instanceof Node))
+            return false;
+        if (obj == this)
+            return true;
+        Node other = (Node)obj;
+        if (this.position == null) {
+            if (other.position != null)
+                return false;
+        } else if (!(this.id == other.id))
+            // If two Nodes have the same `id`, they have the same `position`
+            return false;
+
+        return true;
     }
     
     private float distanceTo(Node to) {
