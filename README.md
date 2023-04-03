@@ -44,3 +44,7 @@ This is likely because the ANT version that is installed with your version of Ec
 - Click on "Ant Home'' button on the right.
 - Select the folder, which you extracted ANT into (e.g., /Users/gvgai/ant/apache-ant-1.9.4/)
 
+# References
+How to create custom `hashCode` and `equals` methods:
+  - https://stackoverflow.com/questions/27581/what-issues-should-be-considered-when-overriding-equals-and-hashcode-in-java/27609#27609
+  - https://www.youtube.com/watch?v=9x-h3X8MHvg
