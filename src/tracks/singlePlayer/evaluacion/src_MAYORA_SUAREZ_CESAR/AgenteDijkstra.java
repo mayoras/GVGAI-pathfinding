@@ -29,7 +29,7 @@ public class AgenteDijkstra extends AbstractPlayer {
 
     public AgenteDijkstra(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         this.scaleF = new Vector2d(stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
-                stateObs.getWorldDimension().height / stateObs.getObservationGrid().length);
+                stateObs.getWorldDimension().height / stateObs.getObservationGrid()[0].length);
 
         System.out.println("Factor de escala: " + this.scaleF);
 
@@ -69,7 +69,7 @@ public class AgenteDijkstra extends AbstractPlayer {
                                         Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
 
         PriorityQueue<Node> frontier = new PriorityQueue<>();
-        // TODO: Consider using other data structure for this
+        // TODO: Consider using other data structure for this (boolean matrix)
         HashSet<Node> explored = new HashSet<>();
 
         // Push the current avatar's position
