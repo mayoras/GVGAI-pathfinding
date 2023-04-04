@@ -22,9 +22,6 @@ public class AgenteDijkstra extends AbstractPlayer {
     Vector2d portal;
     Stack<ACTIONS> plan;
 
-    ArrayList<Vector2d> walls;
-    ArrayList<Vector2d> traps;
-
     // Invalid positions are those which player cannot put a foot on (walls, traps, explored cells, ...)
     boolean[][] invalid;
 
@@ -71,8 +68,7 @@ public class AgenteDijkstra extends AbstractPlayer {
     public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         // If there's a path, follow it.
         if (!this.plan.isEmpty()) {
-            ACTIONS next_act = this.plan.pop();
-            return next_act;
+            return this.plan.pop();
         }
 
         Vector2d avatar = new Vector2d(Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
@@ -86,7 +82,6 @@ public class AgenteDijkstra extends AbstractPlayer {
 
         Node curr = null;
         boolean found = false;
-        long start = System.nanoTime();
         while (!frontier.isEmpty()) {
             // Get current node
             curr = frontier.poll();
@@ -146,9 +141,6 @@ public class AgenteDijkstra extends AbstractPlayer {
                 }
             }
         }
-        long end = System.nanoTime();
-
-        System.out.println("Elapsed time search algorithm: " + (end-start) / 1e6 + " ms");
 
         // Rebuild path/plan
         if (found) {
