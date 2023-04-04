@@ -25,6 +25,8 @@ public class AgenteDijkstra extends AbstractPlayer {
     // Invalid positions are those which player cannot put a foot on (walls, traps, explored cells, ...)
     boolean[][] invalid;
 
+    int expandedNodes;
+
     public static final ACTIONS[] EXPAND_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
 
     public AgenteDijkstra(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
@@ -32,7 +34,7 @@ public class AgenteDijkstra extends AbstractPlayer {
         this.scaleF = new Vector2d(stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
                 stateObs.getWorldDimension().height / stateObs.getObservationGrid()[0].length);
 
-        System.out.println("Factor de escala: " + this.scaleF);
+//        System.out.println("Factor de escala: " + this.scaleF);
 
         this.invalid = new boolean[stateObs.getObservationGrid().length][stateObs.getObservationGrid()[0].length];
 
@@ -62,6 +64,7 @@ public class AgenteDijkstra extends AbstractPlayer {
         portal.y = Math.floor(portal.y / scaleF.y);
 
         this.plan = new Stack<>();
+        this.expandedNodes = 0;
     }
 
     @Override
@@ -82,9 +85,10 @@ public class AgenteDijkstra extends AbstractPlayer {
 
         Node curr = null;
         boolean found = false;
+        long start = System.nanoTime();
         while (!frontier.isEmpty()) {
             // Get current node
-            curr = frontier.poll();
+            curr = frontier.remove();
 
             // Check if it's the portal/goal
             if (this.portal.equals(curr.position)) {
@@ -101,54 +105,66 @@ public class AgenteDijkstra extends AbstractPlayer {
             for (ACTIONS expandAction : EXPAND_ACTIONS) {
                 switch (expandAction) {
                     case ACTION_UP -> {
-                        next_pos = new Vector2d(curr.position.x, curr.position.y - 1);
+                        int x = (int)curr.position.x;
+                        int y = (int)curr.position.y - 1;
                         // Check if position is valid (no walls, no traps, no explored)
-                        if (posIsValid(next_pos)) {
+                        if (posIsValid(x, y)) {
+                            next_pos = new Vector2d(x, y);
                             childNode = new Node(next_pos, curr, expandAction);
-                            childNode.cost = curr.cost + 1;
                             frontier.add(childNode);
+                            ++this.expandedNodes;
                         }
                     }
 
                     case ACTION_DOWN -> {
-                        next_pos = new Vector2d(curr.position.x, curr.position.y + 1);
-                        if (posIsValid(next_pos)) {
+                        int x = (int)curr.position.x;
+                        int y = (int)curr.position.y + 1;
+                        if (posIsValid(x, y)) {
+                            next_pos = new Vector2d(x, y);
                             childNode = new Node(next_pos, curr, expandAction);
-                            childNode.cost = curr.cost + 1;
                             frontier.add(childNode);
+                            ++this.expandedNodes;
                         }
                     }
 
                     case ACTION_LEFT -> {
-                        next_pos = new Vector2d(curr.position.x - 1, curr.position.y);
-                        if (posIsValid(next_pos)) {
+                        int x = (int)curr.position.x - 1;
+                        int y = (int)curr.position.y;
+                        if (posIsValid(x, y)) {
+                            next_pos = new Vector2d(x, y);
                             childNode = new Node(next_pos, curr, expandAction);
-                            childNode.cost = curr.cost + 1;
                             frontier.add(childNode);
+                            ++this.expandedNodes;
                         }
                     }
 
                     case ACTION_RIGHT -> {
-                        next_pos = new Vector2d(curr.position.x + 1, curr.position.y);
-                        if (posIsValid(next_pos)) {
+                        int x = (int)curr.position.x + 1;
+                        int y = (int)curr.position.y;
+                        if (posIsValid(x, y)) {
+                            next_pos = new Vector2d(x, y);
                             childNode = new Node(next_pos, curr, expandAction);
-                            childNode.cost = curr.cost + 1;
                             frontier.add(childNode);
+                            ++this.expandedNodes;
                         }
                     }
 
-                    default -> {}
+                    default -> System.out.println("There aren't available moves");
                 }
             }
         }
+        long end = System.nanoTime();
+        System.out.println("Dijkstra: " + (end-start)/1e6 + " ms");
+        System.out.println("Total expanded nodes: " + this.expandedNodes);
 
         // Rebuild path/plan
         if (found) {
-            System.out.println("FOUND!\nTotal cost: " + curr.cost + " steps");
+//            System.out.println("FOUND!\nTotal cost: " + curr.cost + " steps");
             rebuildPath(curr);
+            System.out.println("Computed path lenght: " + this.plan.size());
         }
 
-        return ACTIONS.ACTION_NIL;
+        return this.plan.pop();
     }
 
     /**
@@ -163,24 +179,9 @@ public class AgenteDijkstra extends AbstractPlayer {
         }
     }
 
-    private boolean posIsValid(Vector2d pos) {
-//        // Check if it is a valid step position
-//        for (Vector2d w : this.walls) {
-//            if (w.equals(pos))
-//                return false;
-//        }
-//
-//        // Check it is not a trap
-//        for (Vector2d t : this.traps) {
-//            if (t.equals(pos))
-//                return false;
-//        }
-
-        // if there's an obstacle
-        if (this.invalid[(int)pos.x][(int)pos.y])
-            return false;
-
-        return true;
+    private boolean posIsValid(int x, int y) {
+        // if there's not obstacle, or it has already been visited
+        return !this.invalid[x][y];
     }
 
     private int manhattanToGoal(Node from) {
