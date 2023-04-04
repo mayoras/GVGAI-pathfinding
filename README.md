@@ -44,6 +44,18 @@ This is likely because the ANT version that is installed with your version of Ec
 - Click on "Ant Home'' button on the right.
 - Select the folder, which you extracted ANT into (e.g., /Users/gvgai/ant/apache-ant-1.9.4/)
 
+## Ticks:
+|# Map\Algorithm| Dijkstra |
+|-------------- |----------|
+|0              | 36       |
+|1              | 45       |
+|2              | 39       |
+|3              | 25       |
+|4              | 64       |
+|5              | No-map   |
+|6              | 36       |
+|7              | 114      |
+
 # References
 How to create custom `hashCode` and `equals` methods:
   - https://stackoverflow.com/questions/27581/what-issues-should-be-considered-when-overriding-equals-and-hashcode-in-java/27609#27609
