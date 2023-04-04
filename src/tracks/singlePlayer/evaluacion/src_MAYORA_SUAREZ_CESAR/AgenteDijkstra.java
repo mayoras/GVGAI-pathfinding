@@ -23,6 +23,7 @@ public class AgenteDijkstra extends AbstractPlayer {
     Stack<ACTIONS> plan;
 
     ArrayList<Vector2d> walls;
+    ArrayList<Vector2d> traps;
 
     public static final ACTIONS[] EXPAND_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
 
@@ -36,6 +37,7 @@ public class AgenteDijkstra extends AbstractPlayer {
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
 
         ArrayList<Observation> wallsAux = immPositions[0];
+        ArrayList<Observation> trapsAux = immPositions[1];
 
         this.walls = new ArrayList<>();
         for (Observation aux : wallsAux) {
@@ -45,8 +47,13 @@ public class AgenteDijkstra extends AbstractPlayer {
             );
         }
 
-        // Is this traps??
-//        this.traps = immPositions[1];
+        this.traps = new ArrayList<>();
+        for (Observation aux : trapsAux) {
+            this.traps.add(
+                    new Vector2d(Math.floor(aux.position.x / scaleF.x),
+                                Math.floor(aux.position.y / scaleF.y))
+            );
+        }
 
         portal = positions[0].get(0).position;
         portal.x = Math.floor(portal.x / scaleF.x);
@@ -173,9 +180,14 @@ public class AgenteDijkstra extends AbstractPlayer {
     private boolean posIsValid(Vector2d pos) {
         // Check if it is a valid step position
         for (Vector2d w : this.walls) {
-            if (w.equals(pos)) {
+            if (w.equals(pos))
                 return false;
-            }
+        }
+
+        // Check it is not a trap
+        for (Vector2d t : this.traps) {
+            if (t.equals(pos))
+                return false;
         }
 
         return true;
