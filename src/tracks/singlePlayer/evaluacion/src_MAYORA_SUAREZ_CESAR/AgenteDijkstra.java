@@ -25,13 +25,18 @@ public class AgenteDijkstra extends AbstractPlayer {
     ArrayList<Vector2d> walls;
     ArrayList<Vector2d> traps;
 
+    boolean[][] obstacles;
+
     public static final ACTIONS[] EXPAND_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
 
     public AgenteDijkstra(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+        System.out.println(stateObs.getObservationGrid().length);
         this.scaleF = new Vector2d(stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
                 stateObs.getWorldDimension().height / stateObs.getObservationGrid()[0].length);
 
         System.out.println("Factor de escala: " + this.scaleF);
+
+        this.obstacles = new boolean[stateObs.getObservationGrid().length][stateObs.getObservationGrid()[0].length];
 
         ArrayList<Observation>[] positions = stateObs.getPortalsPositions(stateObs.getAvatarPosition());
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
@@ -39,21 +44,20 @@ public class AgenteDijkstra extends AbstractPlayer {
         ArrayList<Observation> wallsAux = immPositions[0];
         ArrayList<Observation> trapsAux = immPositions[1];
 
-        this.walls = new ArrayList<>();
+        long start = System.nanoTime();
         for (Observation aux : wallsAux) {
-            this.walls.add(
-                    new Vector2d(Math.floor(aux.position.x / scaleF.x),
-                            Math.floor(aux.position.y / scaleF.y))
-            );
+            int i = (int)Math.floor(aux.position.x / scaleF.x);
+            int j = (int)Math.floor(aux.position.y / scaleF.y);
+            this.obstacles[i][j] = true;
         }
-
-        this.traps = new ArrayList<>();
         for (Observation aux : trapsAux) {
-            this.traps.add(
-                    new Vector2d(Math.floor(aux.position.x / scaleF.x),
-                                Math.floor(aux.position.y / scaleF.y))
-            );
+            int i = (int)Math.floor(aux.position.x / scaleF.x);
+            int j = (int)Math.floor(aux.position.y / scaleF.y);
+            this.obstacles[i][j] = true;
         }
+        long end = System.nanoTime();
+
+        System.out.println("Elapsed time to construct obstacles: " + ((end-start) / 1e6) + " ms");
 
         portal = positions[0].get(0).position;
         portal.x = Math.floor(portal.x / scaleF.x);
@@ -83,11 +87,10 @@ public class AgenteDijkstra extends AbstractPlayer {
 
         Node curr = null;
         boolean found = false;
+        long start = System.nanoTime();
         while (!frontier.isEmpty()) {
             // Get current node
             curr = frontier.poll();
-
-            // System.out.println("Nodo actual: " + curr);
 
             // Check if it's the portal/goal
             if (this.portal.equals(curr.position)) {
@@ -155,6 +158,9 @@ public class AgenteDijkstra extends AbstractPlayer {
                 }
             }
         }
+        long end = System.nanoTime();
+
+        System.out.println("Elapsed time search algorithm: " + (end-start) / 1e6 + " ms");
 
         // Rebuild path/plan
         if (found) {
@@ -178,17 +184,21 @@ public class AgenteDijkstra extends AbstractPlayer {
     }
 
     private boolean posIsValid(Vector2d pos) {
-        // Check if it is a valid step position
-        for (Vector2d w : this.walls) {
-            if (w.equals(pos))
-                return false;
-        }
+//        // Check if it is a valid step position
+//        for (Vector2d w : this.walls) {
+//            if (w.equals(pos))
+//                return false;
+//        }
+//
+//        // Check it is not a trap
+//        for (Vector2d t : this.traps) {
+//            if (t.equals(pos))
+//                return false;
+//        }
 
-        // Check it is not a trap
-        for (Vector2d t : this.traps) {
-            if (t.equals(pos))
-                return false;
-        }
+        // if there's an obstacle
+        if (this.obstacles[(int)pos.x][(int)pos.y])
+            return false;
 
         return true;
     }
