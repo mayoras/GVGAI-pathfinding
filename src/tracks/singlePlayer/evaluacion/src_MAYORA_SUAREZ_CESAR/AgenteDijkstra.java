@@ -25,7 +25,8 @@ public class AgenteDijkstra extends AbstractPlayer {
     ArrayList<Vector2d> walls;
     ArrayList<Vector2d> traps;
 
-    boolean[][] obstacles;
+    // Invalid positions are those which player cannot put a foot on (walls, traps, explored cells, ...)
+    boolean[][] invalid;
 
     public static final ACTIONS[] EXPAND_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
 
@@ -36,7 +37,7 @@ public class AgenteDijkstra extends AbstractPlayer {
 
         System.out.println("Factor de escala: " + this.scaleF);
 
-        this.obstacles = new boolean[stateObs.getObservationGrid().length][stateObs.getObservationGrid()[0].length];
+        this.invalid = new boolean[stateObs.getObservationGrid().length][stateObs.getObservationGrid()[0].length];
 
         ArrayList<Observation>[] positions = stateObs.getPortalsPositions(stateObs.getAvatarPosition());
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
@@ -48,12 +49,12 @@ public class AgenteDijkstra extends AbstractPlayer {
         for (Observation aux : wallsAux) {
             int i = (int)Math.floor(aux.position.x / scaleF.x);
             int j = (int)Math.floor(aux.position.y / scaleF.y);
-            this.obstacles[i][j] = true;
+            this.invalid[i][j] = true;
         }
         for (Observation aux : trapsAux) {
             int i = (int)Math.floor(aux.position.x / scaleF.x);
             int j = (int)Math.floor(aux.position.y / scaleF.y);
-            this.obstacles[i][j] = true;
+            this.invalid[i][j] = true;
         }
         long end = System.nanoTime();
 
@@ -78,8 +79,6 @@ public class AgenteDijkstra extends AbstractPlayer {
                                         Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
 
         PriorityQueue<Node> frontier = new PriorityQueue<>();
-        // TODO: Consider using other data structure for this (boolean matrix)
-        HashSet<Node> explored = new HashSet<>();
 
         // Push the current avatar's position
         frontier.add(new Node(avatar));
@@ -98,8 +97,8 @@ public class AgenteDijkstra extends AbstractPlayer {
                 break;
             }
 
-            // Current node is explored
-            explored.add(curr);
+            // Current node is explored, therefore invalid
+            this.invalid[(int)curr.position.x][(int)curr.position.y] = true;
 
             // Expand the current node
             Vector2d next_pos;
@@ -108,38 +107,29 @@ public class AgenteDijkstra extends AbstractPlayer {
                 switch (expandAction) {
                     case ACTION_UP -> {
                         next_pos = new Vector2d(curr.position.x, curr.position.y - 1);
-                        // Check if there's no a wall
+                        // Check if position is valid (no walls, no traps, no explored)
                         if (posIsValid(next_pos)) {
                             childNode = new Node(next_pos, curr, expandAction);
-                            // Check if it's already explored
-                            if (!explored.contains(childNode)) {
-                                childNode.cost = curr.cost + 1;
-                                frontier.add(childNode);
-                            }
+                            childNode.cost = curr.cost + 1;
+                            frontier.add(childNode);
                         }
                     }
 
                     case ACTION_DOWN -> {
                         next_pos = new Vector2d(curr.position.x, curr.position.y + 1);
-                        // Check if there's no a wall
                         if (posIsValid(next_pos)) {
                             childNode = new Node(next_pos, curr, expandAction);
-                            if (!explored.contains(childNode)) {
-                                childNode.cost = curr.cost + 1;
-                                frontier.add(childNode);
-                            }
+                            childNode.cost = curr.cost + 1;
+                            frontier.add(childNode);
                         }
                     }
 
                     case ACTION_LEFT -> {
                         next_pos = new Vector2d(curr.position.x - 1, curr.position.y);
-                        // Check if there's no a wall
                         if (posIsValid(next_pos)) {
                             childNode = new Node(next_pos, curr, expandAction);
-                            if (!explored.contains(childNode)) {
-                                childNode.cost = curr.cost + 1;
-                                frontier.add(childNode);
-                            }
+                            childNode.cost = curr.cost + 1;
+                            frontier.add(childNode);
                         }
                     }
 
@@ -147,10 +137,8 @@ public class AgenteDijkstra extends AbstractPlayer {
                         next_pos = new Vector2d(curr.position.x + 1, curr.position.y);
                         if (posIsValid(next_pos)) {
                             childNode = new Node(next_pos, curr, expandAction);
-                            if (!explored.contains(childNode)) {
-                                childNode.cost = curr.cost + 1;
-                                frontier.add(childNode);
-                            }
+                            childNode.cost = curr.cost + 1;
+                            frontier.add(childNode);
                         }
                     }
 
@@ -197,7 +185,7 @@ public class AgenteDijkstra extends AbstractPlayer {
 //        }
 
         // if there's an obstacle
-        if (this.obstacles[(int)pos.x][(int)pos.y])
+        if (this.invalid[(int)pos.x][(int)pos.y])
             return false;
 
         return true;
