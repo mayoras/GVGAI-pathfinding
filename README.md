@@ -45,11 +45,11 @@ This is likely because the ANT version that is installed with your version of Ec
 - Select the folder, which you extracted ANT into (e.g., /Users/gvgai/ant/apache-ant-1.9.4/)
 
 ## Ticks:
-| # Map\Algorithm | Dijkstra |
-|-----------------|----------|
-| Small           | 36       |
-| Medium          | 113      |
-| Big             | 807      |
+| # Map\Algorithm | Dijkstra | A*   |
+|-----------------|----------|------|
+| Small           | 36       |      |
+| Medium          | 113      |      |
+| Big             | 807      |      |
 
 #### TODO
 - Dijkstra: instead of using ArrayList for frontier list, use another more efficient data structure.
