@@ -8,14 +8,8 @@ import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Stack;
-
-/*
-TODO:
-- Get walls and traps positions to define the VALID actions to take at every step
- */
 
 public class AgenteDijkstra extends AbstractPlayer {
     Vector2d scaleF;
@@ -24,7 +18,7 @@ public class AgenteDijkstra extends AbstractPlayer {
 
     // Invalid positions are those which player cannot put a foot on (walls, traps, explored cells, ...)
     boolean[][] invalid;
-
+    Node goal;
     int expandedNodes;
 
     public static final ACTIONS[] EXPAND_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
@@ -64,13 +58,18 @@ public class AgenteDijkstra extends AbstractPlayer {
         portal.y = Math.floor(portal.y / scaleF.y);
 
         this.plan = new Stack<>();
+        this.goal = null;
         this.expandedNodes = 0;
     }
 
     @Override
     public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         // If there's a path, follow it.
-        if (!this.plan.isEmpty()) {
+        if (!this.plan.isEmpty() || this.goal != null) {
+            if (this.plan.isEmpty()) {
+                rebuildPath();
+                System.out.println("Computed path lenght: " + this.plan.size());
+            }
             return this.plan.pop();
         }
 
@@ -99,58 +98,50 @@ public class AgenteDijkstra extends AbstractPlayer {
             // Current node is explored, therefore invalid
             this.invalid[(int)curr.position.x][(int)curr.position.y] = true;
 
-            // Expand the current node
+            ////// Expand the current node
             Vector2d next_pos;
             Node childNode;
-            for (ACTIONS expandAction : EXPAND_ACTIONS) {
-                switch (expandAction) {
-                    case ACTION_UP -> {
-                        int x = (int)curr.position.x;
-                        int y = (int)curr.position.y - 1;
-                        // Check if position is valid (no walls, no traps, no explored)
-                        if (posIsValid(x, y)) {
-                            next_pos = new Vector2d(x, y);
-                            childNode = new Node(next_pos, curr, expandAction);
-                            frontier.add(childNode);
-                            ++this.expandedNodes;
-                        }
-                    }
+            ACTIONS expandAction;
 
-                    case ACTION_DOWN -> {
-                        int x = (int)curr.position.x;
-                        int y = (int)curr.position.y + 1;
-                        if (posIsValid(x, y)) {
-                            next_pos = new Vector2d(x, y);
-                            childNode = new Node(next_pos, curr, expandAction);
-                            frontier.add(childNode);
-                            ++this.expandedNodes;
-                        }
-                    }
+            //ACTION_UP
+            int x = (int)curr.position.x;
+            int y = (int)curr.position.y - 1;
+            // Check if position is valid (no walls, no traps, no explored)
+            if (posIsValid(x, y)) {
+                next_pos = new Vector2d(x, y);
+                childNode = new Node(next_pos, curr, ACTIONS.ACTION_UP);
+                frontier.add(childNode);
+                ++this.expandedNodes;
+            }
 
-                    case ACTION_LEFT -> {
-                        int x = (int)curr.position.x - 1;
-                        int y = (int)curr.position.y;
-                        if (posIsValid(x, y)) {
-                            next_pos = new Vector2d(x, y);
-                            childNode = new Node(next_pos, curr, expandAction);
-                            frontier.add(childNode);
-                            ++this.expandedNodes;
-                        }
-                    }
+            // ACTION_DOWN
+            x = (int)curr.position.x;
+            y = (int)curr.position.y + 1;
+            if (posIsValid(x, y)) {
+                next_pos = new Vector2d(x, y);
+                childNode = new Node(next_pos, curr, ACTIONS.ACTION_DOWN);
+                frontier.add(childNode);
+                ++this.expandedNodes;
+            }
 
-                    case ACTION_RIGHT -> {
-                        int x = (int)curr.position.x + 1;
-                        int y = (int)curr.position.y;
-                        if (posIsValid(x, y)) {
-                            next_pos = new Vector2d(x, y);
-                            childNode = new Node(next_pos, curr, expandAction);
-                            frontier.add(childNode);
-                            ++this.expandedNodes;
-                        }
-                    }
+            // ACTION_LEFT
+            x = (int)curr.position.x - 1;
+            y = (int)curr.position.y;
+            if (posIsValid(x, y)) {
+                next_pos = new Vector2d(x, y);
+                childNode = new Node(next_pos, curr, ACTIONS.ACTION_LEFT);
+                frontier.add(childNode);
+                ++this.expandedNodes;
+            }
 
-                    default -> System.out.println("There aren't available moves");
-                }
+            // ACTION_RIGHT
+            x = (int)curr.position.x + 1;
+            y = (int)curr.position.y;
+            if (posIsValid(x, y)) {
+                next_pos = new Vector2d(x, y);
+                childNode = new Node(next_pos, curr, ACTIONS.ACTION_RIGHT);
+                frontier.add(childNode);
+                ++this.expandedNodes;
             }
         }
         long end = System.nanoTime();
@@ -160,19 +151,18 @@ public class AgenteDijkstra extends AbstractPlayer {
         // Rebuild path/plan
         if (found) {
 //            System.out.println("FOUND!\nTotal cost: " + curr.cost + " steps");
-            rebuildPath(curr);
-            System.out.println("Computed path lenght: " + this.plan.size());
+//            rebuildPath(curr);
+            this.goal = curr;
         }
 
-        return this.plan.pop();
+        return ACTIONS.ACTION_NIL;
     }
 
     /**
      * @brief Rebuild the path to get to the portal
-     * @param goal goal node
      */
-    private void rebuildPath(Node goal) {
-        Node curr = goal;
+    private void rebuildPath() {
+        Node curr = this.goal;
         while (curr.parent != null) {
             this.plan.push(curr.parent_act);
             curr = curr.parent;
