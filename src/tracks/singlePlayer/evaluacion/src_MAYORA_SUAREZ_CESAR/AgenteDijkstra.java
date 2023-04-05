@@ -7,9 +7,9 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
-import java.util.ArrayList;
-import java.util.PriorityQueue;
-import java.util.Stack;
+import javax.swing.*;
+import java.lang.reflect.Array;
+import java.util.*;
 
 public class AgenteDijkstra extends AbstractPlayer {
     Vector2d scaleF;
@@ -76,18 +76,19 @@ public class AgenteDijkstra extends AbstractPlayer {
         Vector2d avatar = new Vector2d(Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
                                         Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
 
-        PriorityQueue<Node> frontier = new PriorityQueue<>();
+        Queue<Node> frontier = new ArrayDeque<>();
 
         // Push the current avatar's position
-        frontier.add(new Node(avatar));
+        frontier.offer(new Node(avatar));
         System.out.println(avatar);
 
         Node curr = null;
         boolean found = false;
-        long start = System.nanoTime();
         while (!frontier.isEmpty()) {
             // Get current node
-            curr = frontier.remove();
+            curr = frontier.poll();
+            int curr_x = (int)curr.position.x;
+            int curr_y = (int)curr.position.y;
 
             // Check if it's the portal/goal
             if (this.portal.equals(curr.position)) {
@@ -96,56 +97,68 @@ public class AgenteDijkstra extends AbstractPlayer {
             }
 
             // Current node is explored, therefore invalid
-            this.invalid[(int)curr.position.x][(int)curr.position.y] = true;
+            this.invalid[curr_x][curr_y] = true;
 
             ////// Expand the current node
             Vector2d next_pos;
-            Node childNode;
-            ACTIONS expandAction;
+//            Node childNode;
 
-            //ACTION_UP
-            int x = (int)curr.position.x;
-            int y = (int)curr.position.y - 1;
-            // Check if position is valid (no walls, no traps, no explored)
-            if (posIsValid(x, y)) {
-                next_pos = new Vector2d(x, y);
-                childNode = new Node(next_pos, curr, ACTIONS.ACTION_UP);
-                frontier.add(childNode);
-                ++this.expandedNodes;
+            ArrayList<ACTIONS> actions = getValidActions(curr_x, curr_y);
+            for (ACTIONS action : actions) {
+                if (action == ACTIONS.ACTION_UP) {
+                    next_pos = new Vector2d(curr_x, curr_y - 1);
+                    frontier.offer(new Node(next_pos, curr, action));
+                } else if (action == ACTIONS.ACTION_DOWN) {
+                    next_pos = new Vector2d(curr_x, curr_y + 1);
+                    frontier.offer(new Node(next_pos, curr, action));
+                } else if (action == ACTIONS.ACTION_LEFT) {
+                    next_pos = new Vector2d(curr_x - 1, curr_y);
+                    frontier.offer(new Node(next_pos, curr, action));
+                } else if (action == ACTIONS.ACTION_RIGHT) {
+                    next_pos = new Vector2d(curr_x + 1, curr_y);
+                    frontier.offer(new Node(next_pos, curr, action));
+                }
             }
 
-            // ACTION_DOWN
-            x = (int)curr.position.x;
-            y = (int)curr.position.y + 1;
-            if (posIsValid(x, y)) {
-                next_pos = new Vector2d(x, y);
-                childNode = new Node(next_pos, curr, ACTIONS.ACTION_DOWN);
-                frontier.add(childNode);
-                ++this.expandedNodes;
-            }
-
-            // ACTION_LEFT
-            x = (int)curr.position.x - 1;
-            y = (int)curr.position.y;
-            if (posIsValid(x, y)) {
-                next_pos = new Vector2d(x, y);
-                childNode = new Node(next_pos, curr, ACTIONS.ACTION_LEFT);
-                frontier.add(childNode);
-                ++this.expandedNodes;
-            }
-
-            // ACTION_RIGHT
-            x = (int)curr.position.x + 1;
-            y = (int)curr.position.y;
-            if (posIsValid(x, y)) {
-                next_pos = new Vector2d(x, y);
-                childNode = new Node(next_pos, curr, ACTIONS.ACTION_RIGHT);
-                frontier.add(childNode);
-                ++this.expandedNodes;
-            }
+//            //ACTION_UP
+//            int x = curr_x;
+//            int y = curr_y - 1;
+//            // Check if position is valid (no walls, no traps, no explored)
+//            if (posIsValid(x, y)) {
+//                next_pos = new Vector2d(x, y);
+//                childNode = new Node(next_pos, curr, ACTIONS.ACTION_UP);
+//                frontier.offer(childNode);
+//                ++this.expandedNodes;
+//            }
+//
+//            // ACTION_DOWN
+//            y = curr_y + 1;
+//            if (posIsValid(x, y)) {
+//                next_pos = new Vector2d(x, y);
+//                childNode = new Node(next_pos, curr, ACTIONS.ACTION_DOWN);
+//                frontier.offer(childNode);
+//                ++this.expandedNodes;
+//            }
+//
+//            // ACTION_LEFT
+//            x = curr_x - 1;
+//            y = curr_y;
+//            if (posIsValid(x, y)) {
+//                next_pos = new Vector2d(x, y);
+//                childNode = new Node(next_pos, curr, ACTIONS.ACTION_LEFT);
+//                frontier.offer(childNode);
+//                ++this.expandedNodes;
+//            }
+//
+//            // ACTION_RIGHT
+//            x = curr_x + 1;
+//            if (posIsValid(x, y)) {
+//                next_pos = new Vector2d(x, y);
+//                childNode = new Node(next_pos, curr, ACTIONS.ACTION_RIGHT);
+//                frontier.offer(childNode);
+//                ++this.expandedNodes;
+//            }
         }
-        long end = System.nanoTime();
-        System.out.println("Dijkstra: " + (end-start)/1e6 + " ms");
         System.out.println("Total expanded nodes: " + this.expandedNodes);
 
         // Rebuild path/plan
@@ -167,6 +180,32 @@ public class AgenteDijkstra extends AbstractPlayer {
             this.plan.push(curr.parent_act);
             curr = curr.parent;
         }
+    }
+
+    private ArrayList<ACTIONS> getValidActions(int x, int y) {
+        // Up
+        ArrayList<ACTIONS> actions = new ArrayList<>();
+        if (!this.invalid[x][y-1]) {
+            actions.add(ACTIONS.ACTION_UP);
+        }
+
+        // Down
+        if (!this.invalid[x][y+1]) {
+            actions.add(ACTIONS.ACTION_DOWN);
+        }
+
+        // Left
+        if (!this.invalid[x-1][y]) {
+            actions.add(ACTIONS.ACTION_LEFT);
+        }
+
+        // Right
+        if (!this.invalid[x+1][y]) {
+            actions.add(ACTIONS.ACTION_RIGHT);
+        }
+
+        this.expandedNodes += actions.size();
+        return actions;
     }
 
     private boolean posIsValid(int x, int y) {
