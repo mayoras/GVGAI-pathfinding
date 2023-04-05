@@ -45,17 +45,11 @@ This is likely because the ANT version that is installed with your version of Ec
 - Select the folder, which you extracted ANT into (e.g., /Users/gvgai/ant/apache-ant-1.9.4/)
 
 ## Ticks:
-|# Map\Algorithm| Dijkstra |
-|-------------- |----------|
-|0              | 36       |
-|1              | 44       |
-|2              | 38       |
-|3              | 23       |
-|4              | 63       |
-|5              | No-map   |
-|6              | 36       |
-|7              | 113      |
-|8              | 807      |
+| # Map\Algorithm | Dijkstra |
+|-----------------|----------|
+| Small           | 36       |
+| Medium          | 113      |
+| Big             | 807      |
 
 #### TODO
 - Use BFS search algorithm instead of Dijkstra's, the map is represented as 
