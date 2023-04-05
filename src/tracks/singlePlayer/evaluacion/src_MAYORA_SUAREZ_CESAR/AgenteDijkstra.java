@@ -7,8 +7,6 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
-import javax.swing.*;
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class AgenteDijkstra extends AbstractPlayer {
@@ -21,14 +19,11 @@ public class AgenteDijkstra extends AbstractPlayer {
     Node goal;
     int expandedNodes;
 
-    public static final ACTIONS[] EXPAND_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
+//    public static final ACTIONS[] EXPAND_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
 
     public AgenteDijkstra(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-        System.out.println(stateObs.getObservationGrid().length);
         this.scaleF = new Vector2d(stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
                 stateObs.getWorldDimension().height / stateObs.getObservationGrid()[0].length);
-
-//        System.out.println("Factor de escala: " + this.scaleF);
 
         this.invalid = new boolean[stateObs.getObservationGrid().length][stateObs.getObservationGrid()[0].length];
 
@@ -38,7 +33,6 @@ public class AgenteDijkstra extends AbstractPlayer {
         ArrayList<Observation> wallsAux = immPositions[0];
         ArrayList<Observation> trapsAux = immPositions[1];
 
-        long start = System.nanoTime();
         for (Observation aux : wallsAux) {
             int i = (int)Math.floor(aux.position.x / scaleF.x);
             int j = (int)Math.floor(aux.position.y / scaleF.y);
@@ -49,9 +43,6 @@ public class AgenteDijkstra extends AbstractPlayer {
             int j = (int)Math.floor(aux.position.y / scaleF.y);
             this.invalid[i][j] = true;
         }
-        long end = System.nanoTime();
-
-        System.out.println("Elapsed time to construct obstacles: " + ((end-start) / 1e6) + " ms");
 
         portal = positions[0].get(0).position;
         portal.x = Math.floor(portal.x / scaleF.x);
@@ -80,7 +71,6 @@ public class AgenteDijkstra extends AbstractPlayer {
 
         // Push the current avatar's position
         frontier.offer(new Node(avatar));
-        System.out.println(avatar);
 
         Node curr = null;
         boolean found = false;
@@ -103,21 +93,26 @@ public class AgenteDijkstra extends AbstractPlayer {
             Vector2d next_pos;
 //            Node childNode;
 
-            ArrayList<ACTIONS> actions = getValidActions(curr_x, curr_y);
-            for (ACTIONS action : actions) {
-                if (action == ACTIONS.ACTION_UP) {
-                    next_pos = new Vector2d(curr_x, curr_y - 1);
-                    frontier.offer(new Node(next_pos, curr, action));
-                } else if (action == ACTIONS.ACTION_DOWN) {
-                    next_pos = new Vector2d(curr_x, curr_y + 1);
-                    frontier.offer(new Node(next_pos, curr, action));
-                } else if (action == ACTIONS.ACTION_LEFT) {
-                    next_pos = new Vector2d(curr_x - 1, curr_y);
-                    frontier.offer(new Node(next_pos, curr, action));
-                } else if (action == ACTIONS.ACTION_RIGHT) {
-                    next_pos = new Vector2d(curr_x + 1, curr_y);
-                    frontier.offer(new Node(next_pos, curr, action));
-                }
+            boolean[] actions = getValidActions(curr_x, curr_y);
+            if (actions[0]) {
+                next_pos = new Vector2d(curr_x, curr_y - 1);
+                frontier.offer(new Node(next_pos, curr, ACTIONS.ACTION_UP));
+                ++this.expandedNodes;
+            }
+            if (actions[1]) {
+                next_pos = new Vector2d(curr_x, curr_y + 1);
+                frontier.offer(new Node(next_pos, curr, ACTIONS.ACTION_DOWN));
+                ++this.expandedNodes;
+            }
+            if (actions[2]) {
+                next_pos = new Vector2d(curr_x - 1, curr_y);
+                frontier.offer(new Node(next_pos, curr, ACTIONS.ACTION_LEFT));
+                ++this.expandedNodes;
+            }
+            if (actions[3]) {
+                next_pos = new Vector2d(curr_x + 1, curr_y);
+                frontier.offer(new Node(next_pos, curr, ACTIONS.ACTION_RIGHT));
+                ++this.expandedNodes;
             }
 
 //            //ACTION_UP
@@ -182,29 +177,30 @@ public class AgenteDijkstra extends AbstractPlayer {
         }
     }
 
-    private ArrayList<ACTIONS> getValidActions(int x, int y) {
+    private boolean[] getValidActions(int x, int y) {
+//        ArrayList<ACTIONS> actions = new ArrayList<>();
+        boolean[] actions = new boolean[4];
         // Up
-        ArrayList<ACTIONS> actions = new ArrayList<>();
         if (!this.invalid[x][y-1]) {
-            actions.add(ACTIONS.ACTION_UP);
+            actions[0] = true;
         }
 
         // Down
         if (!this.invalid[x][y+1]) {
-            actions.add(ACTIONS.ACTION_DOWN);
+            actions[1] = true;
         }
 
         // Left
         if (!this.invalid[x-1][y]) {
-            actions.add(ACTIONS.ACTION_LEFT);
+            actions[2] = true;
         }
 
         // Right
         if (!this.invalid[x+1][y]) {
-            actions.add(ACTIONS.ACTION_RIGHT);
+            actions[3] = true;
         }
 
-        this.expandedNodes += actions.size();
+//        this.expandedNodes += actions.size();
         return actions;
     }
 
