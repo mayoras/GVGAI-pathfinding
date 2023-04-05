@@ -43,27 +43,23 @@ public class Node implements Comparable<Node> {
      * @param obj Comparison node
      * @return `true` if obj is equal to this, `false` otherwise.
      */
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (obj == null)
-//            return false;
-//        if (!(obj instanceof Node))
-//            return false;
-//        if (obj == this)
-//            return true;
-//        Node other = (Node)obj;
-//        if (this.position == null) {
-//            if (other.position != null)
-//                return false;
-//        } else if (!(this.id == other.id))
-//            // If two Nodes have the same `id`, they have the same `position`
-//            return false;
-//
-//        return true;
-//    }
-    public boolean equals(Object o)
-    {
-        return this.position.equals(((tools.pathfinder.Node)o).position);
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (!(obj instanceof Node))
+            return false;
+        if (obj == this)
+            return true;
+        Node other = (Node)obj;
+        if (this.position == null) {
+            if (other.position != null)
+                return false;
+        } else if (!(this.id == other.id))
+            // If two Nodes have the same `id`, they have the same `position`
+            return false;
+
+        return true;
     }
 
 
