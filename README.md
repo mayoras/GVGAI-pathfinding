@@ -52,8 +52,7 @@ This is likely because the ANT version that is installed with your version of Ec
 | Big             | 807      |
 
 #### TODO
-- Use BFS search algorithm instead of Dijkstra's, the map is represented as 
-a graph with unitary edges, no need to use a priority queue just a queue (more efficient).
+- Dijkstra: instead of using ArrayList for frontier list, use another more efficient data structure.
 
 # References
 How to create custom `hashCode` and `equals` methods:
