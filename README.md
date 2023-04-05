@@ -48,13 +48,14 @@ This is likely because the ANT version that is installed with your version of Ec
 |# Map\Algorithm| Dijkstra |
 |-------------- |----------|
 |0              | 36       |
-|1              | 45       |
-|2              | 39       |
-|3              | 25       |
-|4              | 64       |
+|1              | 44       |
+|2              | 38       |
+|3              | 23       |
+|4              | 63       |
 |5              | No-map   |
 |6              | 36       |
-|7              | 114      |
+|7              | 113      |
+|8              | 807      |
 
 #### TODO
 - Use BFS search algorithm instead of Dijkstra's, the map is represented as 
