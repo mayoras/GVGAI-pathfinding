@@ -10,22 +10,35 @@ import tools.Vector2d;
 import java.util.*;
 
 public class AgenteDijkstra extends AbstractPlayer {
+    // Scale factor
     Vector2d scaleF;
+
+    // Portal/Goal's position
     Vector2d portal;
+
+    // Plan of actions to take in order to reach the portal
     Stack<ACTIONS> plan;
 
     // Invalid positions are those which player cannot put a foot on (walls, traps, explored cells, ...)
+    // plays the role of explored nodes list
     boolean[][] invalid;
+
+    // Matrix of distances/costs of all nodes
     int[][] g;
+
+    // Matrix of parent's positions of a node. parent[x][y] === parent of node with position (x,y)
     Vector2d[][] parent;
+
+    // Number of expanded nodes
     int expandedNodes;
+
+    // Map's number of cells per row and column
     int nx, ny;
 
     public AgenteDijkstra(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-        this.scaleF = new Vector2d(stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
-                stateObs.getWorldDimension().height / stateObs.getObservationGrid()[0].length);
+        this.scaleF = new Vector2d((float)stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
+                (float)stateObs.getWorldDimension().height / stateObs.getObservationGrid()[0].length);
 
-//        System.out.println("Factor de escala: " + this.scaleF);
 
         this.nx = stateObs.getObservationGrid().length;
         this.ny = stateObs.getObservationGrid()[0].length;
@@ -34,18 +47,16 @@ public class AgenteDijkstra extends AbstractPlayer {
         this.g = new int[this.nx][this.ny];
         this.parent = new Vector2d[this.nx][this.ny];
 
-        // Initialize distance matrix
+        // Initialize distance/cost matrix
         for (int i = 0; i < this.nx; ++i) {
             Arrays.fill(this.g[i], Integer.MAX_VALUE);
         }
 
-        ArrayList<Observation>[] positions = stateObs.getPortalsPositions(stateObs.getAvatarPosition());
+        ////////////////// RECORD WALLS & TRAPS POSITIONS /////////////////
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
-
         ArrayList<Observation> wallsAux = immPositions[0];
         ArrayList<Observation> trapsAux = immPositions[1];
 
-        long start = System.nanoTime();
         for (Observation aux : wallsAux) {
             int i = (int)Math.floor(aux.position.x / scaleF.x);
             int j = (int)Math.floor(aux.position.y / scaleF.y);
@@ -56,9 +67,10 @@ public class AgenteDijkstra extends AbstractPlayer {
             int j = (int)Math.floor(aux.position.y / scaleF.y);
             this.invalid[i][j] = true;
         }
-        long end = System.nanoTime();
+        //////////////////////////////////////////////////////////////////////
 
-        System.out.println("Elapsed time to construct obstacles: " + ((end-start) / 1e6) + " ms");
+        // get portal/goal position
+        ArrayList<Observation>[] positions = stateObs.getPortalsPositions(stateObs.getAvatarPosition());
 
         portal = positions[0].get(0).position;
         portal.x = Math.floor(portal.x / scaleF.x);
@@ -75,21 +87,25 @@ public class AgenteDijkstra extends AbstractPlayer {
             return this.plan.pop();
         }
 
+        // get avatar's starting position and initialize its cost to 0
         Vector2d avatar = new Vector2d(Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
                                         Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
-
         this.g[(int)avatar.x][(int)avatar.y] = 0;
+
         int curr_x, curr_y;
         ArrayList<Vector2d> frontier = new ArrayList<>(this.nx * this.ny);
+        // add starting node to frontier list
         frontier.add(avatar);
-        long start = System.nanoTime();
+
+//        long start = System.nanoTime();
         while (true) {
-            // get curr node
+            // get curr node, as the one with minimum cost of frontier nodes
             int minDist = Integer.MAX_VALUE;
             curr_x = -1;
             curr_y = -1;
             Vector2d curr = null;
             for (Vector2d f : frontier) {
+                // if the cost of node is minimum and its position is valid
                 if (minDist > this.g[(int)f.x][(int)f.y] && !this.invalid[(int)f.x][(int)f.y]) {
                     minDist = this.g[(int)f.x][(int)f.y];
                     curr_x = (int)f.x;
@@ -98,11 +114,12 @@ public class AgenteDijkstra extends AbstractPlayer {
                 }
             }
 
+            // check if the current position is goal's
             if (curr_x == this.portal.x && curr_y == this.portal.y) {
                 break;
             }
 
-            // visit node
+            // node is visited, invalid position for not going backwards
             this.invalid[curr_x][curr_y] = true;
             frontier.remove(curr);
 
@@ -113,31 +130,35 @@ public class AgenteDijkstra extends AbstractPlayer {
                 this.g[curr_x][curr_y - 1] = minDist + 1;
                 this.parent[curr_x][curr_y - 1] = parent;
                 frontier.add(new Vector2d(curr_x, curr_y - 1));
+                ++this.expandedNodes;
             }
             // down
             if (!this.invalid[curr_x][curr_y + 1] && this.g[curr_x][curr_y + 1] > minDist + 1) {
                 this.g[curr_x][curr_y + 1] = minDist + 1;
                 this.parent[curr_x][curr_y + 1] = parent;
                 frontier.add(new Vector2d(curr_x, curr_y + 1));
+                ++this.expandedNodes;
             }
             // left
             if (!this.invalid[curr_x - 1][curr_y] && this.g[curr_x - 1][curr_y] > minDist + 1) {
                 this.g[curr_x - 1][curr_y] = minDist + 1;
                 this.parent[curr_x - 1][curr_y] = parent;
                 frontier.add(new Vector2d(curr_x - 1, curr_y));
+                ++this.expandedNodes;
             }
             // right
             if (!this.invalid[curr_x + 1][curr_y] && this.g[curr_x + 1][curr_y] > minDist + 1) {
                 this.g[curr_x + 1][curr_y] = minDist + 1;
                 this.parent[curr_x + 1][curr_y] = parent;
                 frontier.add(new Vector2d(curr_x + 1, curr_y));
+                ++this.expandedNodes;
             }
         }
-        long end = System.nanoTime();
+//        long end = System.nanoTime();
 
-        System.out.println("Elapsed time - Dijkstra: " + (end - start) / 1e6 + " ms");
+//        System.out.println("Elapsed time - Dijkstra: " + (end - start) / 1e6 + " ms");
+        System.out.println("Nodes expanded: " + this.expandedNodes);
 
-        System.out.println("Found!");
         rebuildPath(curr_x, curr_y);
         return this.plan.pop();
     }
@@ -153,9 +174,11 @@ public class AgenteDijkstra extends AbstractPlayer {
         while (true) {
             Vector2d parent = this.parent[curr_x][curr_y];
 
+            // Starting node
             if (parent == null)
                 break;
 
+            // infer parent's action from parent-child position's difference
             if (parent.y > curr_y) {
                 // up
                 this.plan.push(ACTIONS.ACTION_UP);
