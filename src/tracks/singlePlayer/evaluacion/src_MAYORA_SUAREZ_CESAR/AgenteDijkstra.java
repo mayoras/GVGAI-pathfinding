@@ -97,7 +97,7 @@ public class AgenteDijkstra extends AbstractPlayer {
         // add starting node to frontier list
         frontier.add(avatar);
 
-//        long start = System.nanoTime();
+        long start = System.nanoTime();
         while (true) {
             // get curr node, as the one with minimum cost of frontier nodes
             int minDist = Integer.MAX_VALUE;
@@ -154,12 +154,16 @@ public class AgenteDijkstra extends AbstractPlayer {
                 ++this.expandedNodes;
             }
         }
-//        long end = System.nanoTime();
+        long end = System.nanoTime();
 
-//        System.out.println("Elapsed time - Dijkstra: " + (end - start) / 1e6 + " ms");
+        System.out.println("Runtime - Dijkstra: " + (end - start) / 1e6 + " ms");
         System.out.println("Nodes expanded: " + this.expandedNodes);
 
+        // Reconstruct path
         rebuildPath(curr_x, curr_y);
+
+        System.out.println("Computed path length: " + this.plan.size());
+
         return this.plan.pop();
     }
 
