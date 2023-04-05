@@ -7,9 +7,7 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
-import java.util.ArrayList;
-import java.util.PriorityQueue;
-import java.util.Stack;
+import java.util.*;
 
 public class AgenteDijkstra extends AbstractPlayer {
     Vector2d scaleF;
@@ -18,19 +16,28 @@ public class AgenteDijkstra extends AbstractPlayer {
 
     // Invalid positions are those which player cannot put a foot on (walls, traps, explored cells, ...)
     boolean[][] invalid;
-    Node goal;
+    int[][] g;
+    Vector2d[][] parent;
     int expandedNodes;
-
-    public static final ACTIONS[] EXPAND_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
+    int nx, ny;
 
     public AgenteDijkstra(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-        System.out.println(stateObs.getObservationGrid().length);
         this.scaleF = new Vector2d(stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
                 stateObs.getWorldDimension().height / stateObs.getObservationGrid()[0].length);
 
 //        System.out.println("Factor de escala: " + this.scaleF);
 
-        this.invalid = new boolean[stateObs.getObservationGrid().length][stateObs.getObservationGrid()[0].length];
+        this.nx = stateObs.getObservationGrid().length;
+        this.ny = stateObs.getObservationGrid()[0].length;
+
+        this.invalid = new boolean[this.nx][this.ny];
+        this.g = new int[this.nx][this.ny];
+        this.parent = new Vector2d[this.nx][this.ny];
+
+        // Initialize distance matrix
+        for (int i = 0; i < this.nx; ++i) {
+            Arrays.fill(this.g[i], Integer.MAX_VALUE);
+        }
 
         ArrayList<Observation>[] positions = stateObs.getPortalsPositions(stateObs.getAvatarPosition());
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
@@ -58,124 +65,114 @@ public class AgenteDijkstra extends AbstractPlayer {
         portal.y = Math.floor(portal.y / scaleF.y);
 
         this.plan = new Stack<>();
-        this.goal = null;
         this.expandedNodes = 0;
     }
 
     @Override
     public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         // If there's a path, follow it.
-        if (!this.plan.isEmpty() || this.goal != null) {
-            if (this.plan.isEmpty()) {
-                rebuildPath();
-                System.out.println("Computed path lenght: " + this.plan.size());
-            }
+        if (!this.plan.empty()) {
             return this.plan.pop();
         }
 
         Vector2d avatar = new Vector2d(Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
                                         Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
 
-        PriorityQueue<Node> frontier = new PriorityQueue<>();
-
-        // Push the current avatar's position
-        frontier.add(new Node(avatar));
-        System.out.println(avatar);
-
-        Node curr = null;
-        boolean found = false;
+        this.g[(int)avatar.x][(int)avatar.y] = 0;
+        int curr_x, curr_y;
+        ArrayList<Vector2d> frontier = new ArrayList<>(this.nx * this.ny);
+        frontier.add(avatar);
         long start = System.nanoTime();
-        while (!frontier.isEmpty()) {
-            // Get current node
-            curr = frontier.remove();
+        while (true) {
+            // get curr node
+            int minDist = Integer.MAX_VALUE;
+            curr_x = -1;
+            curr_y = -1;
+            Vector2d curr = null;
+            for (Vector2d f : frontier) {
+                if (minDist > this.g[(int)f.x][(int)f.y] && !this.invalid[(int)f.x][(int)f.y]) {
+                    minDist = this.g[(int)f.x][(int)f.y];
+                    curr_x = (int)f.x;
+                    curr_y = (int)f.y;
+                    curr = f;
+                }
+            }
 
-            // Check if it's the portal/goal
-            if (this.portal.equals(curr.position)) {
-                found = true;
+            if (curr_x == this.portal.x && curr_y == this.portal.y) {
                 break;
             }
 
-            // Current node is explored, therefore invalid
-            this.invalid[(int)curr.position.x][(int)curr.position.y] = true;
+            // visit node
+            this.invalid[curr_x][curr_y] = true;
+            frontier.remove(curr);
 
-            ////// Expand the current node
-            Vector2d next_pos;
-            Node childNode;
-            ACTIONS expandAction;
-
-            //ACTION_UP
-            int x = (int)curr.position.x;
-            int y = (int)curr.position.y - 1;
-            // Check if position is valid (no walls, no traps, no explored)
-            if (posIsValid(x, y)) {
-                next_pos = new Vector2d(x, y);
-                childNode = new Node(next_pos, curr, ACTIONS.ACTION_UP);
-                frontier.add(childNode);
-                ++this.expandedNodes;
+            // Expand node
+            Vector2d parent = new Vector2d(curr_x, curr_y);
+            // up
+            if (!this.invalid[curr_x][curr_y - 1] && this.g[curr_x][curr_y - 1] > minDist + 1) {
+                this.g[curr_x][curr_y - 1] = minDist + 1;
+                this.parent[curr_x][curr_y - 1] = parent;
+                frontier.add(new Vector2d(curr_x, curr_y - 1));
             }
-
-            // ACTION_DOWN
-            x = (int)curr.position.x;
-            y = (int)curr.position.y + 1;
-            if (posIsValid(x, y)) {
-                next_pos = new Vector2d(x, y);
-                childNode = new Node(next_pos, curr, ACTIONS.ACTION_DOWN);
-                frontier.add(childNode);
-                ++this.expandedNodes;
+            // down
+            if (!this.invalid[curr_x][curr_y + 1] && this.g[curr_x][curr_y + 1] > minDist + 1) {
+                this.g[curr_x][curr_y + 1] = minDist + 1;
+                this.parent[curr_x][curr_y + 1] = parent;
+                frontier.add(new Vector2d(curr_x, curr_y + 1));
             }
-
-            // ACTION_LEFT
-            x = (int)curr.position.x - 1;
-            y = (int)curr.position.y;
-            if (posIsValid(x, y)) {
-                next_pos = new Vector2d(x, y);
-                childNode = new Node(next_pos, curr, ACTIONS.ACTION_LEFT);
-                frontier.add(childNode);
-                ++this.expandedNodes;
+            // left
+            if (!this.invalid[curr_x - 1][curr_y] && this.g[curr_x - 1][curr_y] > minDist + 1) {
+                this.g[curr_x - 1][curr_y] = minDist + 1;
+                this.parent[curr_x - 1][curr_y] = parent;
+                frontier.add(new Vector2d(curr_x - 1, curr_y));
             }
-
-            // ACTION_RIGHT
-            x = (int)curr.position.x + 1;
-            y = (int)curr.position.y;
-            if (posIsValid(x, y)) {
-                next_pos = new Vector2d(x, y);
-                childNode = new Node(next_pos, curr, ACTIONS.ACTION_RIGHT);
-                frontier.add(childNode);
-                ++this.expandedNodes;
+            // right
+            if (!this.invalid[curr_x + 1][curr_y] && this.g[curr_x + 1][curr_y] > minDist + 1) {
+                this.g[curr_x + 1][curr_y] = minDist + 1;
+                this.parent[curr_x + 1][curr_y] = parent;
+                frontier.add(new Vector2d(curr_x + 1, curr_y));
             }
         }
         long end = System.nanoTime();
-        System.out.println("Dijkstra: " + (end-start)/1e6 + " ms");
-        System.out.println("Total expanded nodes: " + this.expandedNodes);
 
-        // Rebuild path/plan
-        if (found) {
-//            System.out.println("FOUND!\nTotal cost: " + curr.cost + " steps");
-//            rebuildPath(curr);
-            this.goal = curr;
-        }
+        System.out.println("Elapsed time - Dijkstra: " + (end - start) / 1e6 + " ms");
 
-        return ACTIONS.ACTION_NIL;
+        System.out.println("Found!");
+        rebuildPath(curr_x, curr_y);
+        return this.plan.pop();
     }
 
     /**
      * @brief Rebuild the path to get to the portal
+     * @param goal_x portal's x coordinate
+     * @param goal_y portal's y coordinate
      */
-    private void rebuildPath() {
-        Node curr = this.goal;
-        while (curr.parent != null) {
-            this.plan.push(curr.parent_act);
-            curr = curr.parent;
+    private void rebuildPath(int goal_x, int goal_y) {
+        int curr_x = goal_x;
+        int curr_y = goal_y;
+        while (true) {
+            Vector2d parent = this.parent[curr_x][curr_y];
+
+            if (parent == null)
+                break;
+
+            if (parent.y > curr_y) {
+                // up
+                this.plan.push(ACTIONS.ACTION_UP);
+            } else if (parent.y < curr_y) {
+                // down
+                this.plan.push(ACTIONS.ACTION_DOWN);
+            } else if (parent.x > curr_x) {
+                // left
+                this.plan.push(ACTIONS.ACTION_LEFT);
+            } else if (parent.x < curr_x) {
+                // right
+                this.plan.push(ACTIONS.ACTION_RIGHT);
+            }
+
+            // go backwards
+            curr_x = (int)parent.x;
+            curr_y = (int)parent.y;
         }
-    }
-
-    private boolean posIsValid(int x, int y) {
-        // if there's not obstacle, or it has already been visited
-        return !this.invalid[x][y];
-    }
-
-    private int manhattanToGoal(Node from) {
-        return (int)(Math.abs(from.position.x - this.portal.x) +
-                Math.abs(from.position.y - this.portal.y));
     }
 }
