@@ -44,12 +44,26 @@ This is likely because the ANT version that is installed with your version of Ec
 - Click on "Ant Home'' button on the right.
 - Select the folder, which you extracted ANT into (e.g., /Users/gvgai/ant/apache-ant-1.9.4/)
 
-## Ticks:
-| # Map\Algorithm | Dijkstra | A*   |
-|-----------------|----------|------|
-| Small           | 36       |      |
-| Medium          | 113      |      |
-| Big             | 807      |      |
+## Measures table:
+
+| Algorithm | #Map    | Runtime (ms) | Path length | Expanded Nodes  |
+|-----------|---------|--------------|-------------|-----------------|
+|           | Small   | 0.2251       | 36          | 88              |
+| Dijkstra  | Medium  | 1.2930       | 114         | 566             |
+|           | Big     | 2.2374       | 808         | 2144            |
+| --------- | ------- | ------------ | ----------- | --------------- |
+|           | Small   | 1.5195       | 36          | 88              |
+| A*        | Medium  | 3.8909       | 114         | 566             |
+|           | Big     | 4.5606       | 808         | 2144            |
+| --------- | ------- | ------------ | ----------- | --------------- |
+|           | Small   |              |             |                 |
+| RTA*      | Medium  |              |             |                 |
+|           | Big     |              |             |                 |
+| --------- | ------- | ------------ | ----------- | --------------- |
+|           | Small   |              |             |                 |
+| LRTA*     | Medium  |              |             |                 |
+|           | Big     |              |             |                 |
+
 
 #### TODO
 - Dijkstra: instead of using ArrayList for frontier list, use another more efficient data structure.
