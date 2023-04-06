@@ -157,6 +157,7 @@ public class AgenteAStar extends AbstractPlayer {
                     frontier.add(next);
                     this.parent[nextX][nextY] = parent;
                     this.g[nextX][nextY] = minDist + 1;
+                    ++this.expandedNodes;
                 } else if (
                         // it's been not visited and it's not frontier, expand node
                         !this.visited[nextX][nextY]
@@ -165,6 +166,7 @@ public class AgenteAStar extends AbstractPlayer {
                     frontier.add(next.copy());
                     this.parent[nextX][nextY] = parent;
                     this.g[nextX][nextY] = minDist + 1;
+                    ++this.expandedNodes;
                 } else if (
                         // it's frontier and the cost to get to it is less, update its cost
                         frontier.contains(next.copy())
@@ -172,19 +174,6 @@ public class AgenteAStar extends AbstractPlayer {
                 ) {
                     this.g[nextX][nextY] = minDist + 1;
                 }
-
-//                if (this.visited[(int)next.x][(int)next.y] && this.g[(int)next.x][(int)next.y] > minDist + 1) {
-//                    this.invalid[(int)next.x][(int)next.y] = false;
-//                    this.g[(int)next.x][(int)next.y] = minDist + 1;
-//                    this.parent[(int)next.x][(int)next.y] = parent;
-//                    frontier.add(next);
-//                    ++this.expandedNodes;
-//                } else if (!this.invalid[(int)next.x][(int)next.y] && !frontier.contains(next)) {
-//                    frontier.add(next);
-//                    ++this.expandedNodes;
-//                } else if (frontier.contains(next) && this.g[(int)next.x][(int)next.y] > minDist + 1) {
-//                    this.g[(int)next.x][(int)next.y] = minDist + 1;
-//                }
             }
         }
         long end = System.nanoTime();
