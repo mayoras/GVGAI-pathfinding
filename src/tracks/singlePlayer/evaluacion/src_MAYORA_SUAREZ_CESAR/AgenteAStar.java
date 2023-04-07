@@ -172,7 +172,7 @@ public class AgenteAStar extends AbstractPlayer {
                     ++this.expandedNodes;
                 } else if (
                         // it's frontier and the cost to get to it is less, update its cost
-                        frontier.contains(next.copy())
+                        frontier.contains(next)
                         && this.g[nextX][nextY] > minDist + 1
                 ) {
                     this.g[nextX][nextY] = minDist + 1;
