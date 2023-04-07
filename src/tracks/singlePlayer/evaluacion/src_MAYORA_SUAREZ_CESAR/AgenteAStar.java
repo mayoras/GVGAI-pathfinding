@@ -152,12 +152,12 @@ public class AgenteAStar extends AbstractPlayer {
                 if (this.invalid[nextX][nextY]) continue;
 
                 if (
-                        // it's been visited and less cost, we found a better path to get this node
+                        // it's been visited and less cost, we found a better path to get this node (Judea Pearl approach)
                         this.visited[nextX][nextY]
                         && this.g[nextX][nextY] > minDist + 1
                 ) {
                     this.visited[nextX][nextY] = false;
-                    frontier.add(next);
+                    frontier.add(new Vector2d(nextX, nextY));
                     this.parent[nextX][nextY] = parent;
                     this.g[nextX][nextY] = minDist + 1;
                     ++this.expandedNodes;
@@ -166,7 +166,7 @@ public class AgenteAStar extends AbstractPlayer {
                         !this.visited[nextX][nextY]
                         && !frontier.contains(next)
                 ) {
-                    frontier.add(next.copy());
+                    frontier.add(new Vector2d(nextX, nextY));
                     this.parent[nextX][nextY] = parent;
                     this.g[nextX][nextY] = minDist + 1;
                     ++this.expandedNodes;
