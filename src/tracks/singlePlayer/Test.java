@@ -27,6 +27,7 @@ public class Test {
 
 		// My Agents
 		String dijkstraController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.AgenteDijkstra";
+		String aStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.AgenteAStar";
 
 		//Load available games
 		String spGamesCollection =  "examples/all_games_sp.csv";
@@ -54,7 +55,7 @@ public class Test {
 //		// 2. This plays a game in a level by the controller.
 //		ArcadeMachine.runOneGame(game, level1, visuals, sampleRHEAController, recordActionsFile, seed, 0);
 
-		ArcadeMachine.runOneGame(game, level1, visuals, dijkstraController, recordActionsFile, seed, 0);
+		ArcadeMachine.runOneGame(game, level1, visuals, aStarController, recordActionsFile, seed, 0);
 
 
 		// 3. This replays a game from an action file previously recorded
