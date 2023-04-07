@@ -105,11 +105,13 @@ public class AgenteDijkstra extends AbstractPlayer {
             curr_y = -1;
             Vector2d curr = null;
             for (Vector2d f : frontier) {
+                int f_x = (int)f.x;
+                int f_y = (int)f.y;
                 // if the cost of node is minimum and its position is valid
-                if (minDist > this.g[(int)f.x][(int)f.y] && !this.invalid[(int)f.x][(int)f.y]) {
-                    minDist = this.g[(int)f.x][(int)f.y];
-                    curr_x = (int)f.x;
-                    curr_y = (int)f.y;
+                if (!this.invalid[f_x][f_y] && minDist > this.g[f_x][f_y]) {
+                    minDist = this.g[f_x][f_y];
+                    curr_x = f_x;
+                    curr_y = f_y;
                     curr = f;
                 }
             }
