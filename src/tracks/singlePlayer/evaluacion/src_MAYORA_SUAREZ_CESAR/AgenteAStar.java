@@ -107,23 +107,26 @@ public class AgenteAStar extends AbstractPlayer {
         frontier.add(avatar);
 
         Vector2d next = new Vector2d();
+        Vector2d curr = null;
 
         long start = System.nanoTime();
         while (true) {
             // get curr node, as the one with minimum cost of frontier nodes
-            int minDist = Integer.MAX_VALUE;
+            int minF = Integer.MAX_VALUE;
             currX = -1;
             currY = -1;
-            Vector2d curr = null;
             for (Vector2d f_node : frontier) {
+                int f_x = (int)f_node.x;
+                int f_y = (int)f_node.y;
                 // if the f=g+h heuristic value of node is minimum and its position is valid
-                if (minDist > f((int)f_node.x, (int)f_node.y) && !this.invalid[(int)f_node.x][(int)f_node.y]) {
-                    minDist = this.g[(int)f_node.x][(int)f_node.y];
-                    currX = (int)f_node.x;
-                    currY = (int)f_node.y;
+                if (!this.invalid[f_x][f_y] && minF > f(f_x, f_y)) {
+                    minF = f(f_x, f_y);
+                    currX = f_x;
+                    currY = f_y;
                     curr = f_node;
                 }
             }
+            int minDist = this.g[currX][currY];
 
             // check if the current position is goal's
             if (currX == this.portal.x && currY == this.portal.y) {
@@ -190,24 +193,18 @@ public class AgenteAStar extends AbstractPlayer {
     }
 
     private void nextSuccessor(ACTIONS action, Vector2d next, int currX, int currY) {
-        switch (action) {
-            case ACTION_UP -> {
-                next.x = currX;
-                next.y = currY - 1;
-            }
-            case ACTION_DOWN -> {
-                next.x = currX;
-                next.y = currY + 1;
-            }
-            case ACTION_LEFT -> {
-                next.x = currX - 1;
-                next.y = currY;
-            }
-            case ACTION_RIGHT -> {
-                next.x = currX + 1;
-                next.y = currY;
-            }
-            default -> {}
+        if (action == ACTIONS.ACTION_UP) {
+            next.x = currX;
+            next.y = currY - 1;
+        } else if (action == ACTIONS.ACTION_DOWN) {
+            next.x = currX;
+            next.y = currY + 1;
+        } else if (action == ACTIONS.ACTION_LEFT) {
+            next.x = currX - 1;
+            next.y = currY;
+        } else if (action == ACTIONS.ACTION_RIGHT) {
+            next.x = currX + 1;
+            next.y = currY;
         }
     }
 
@@ -248,7 +245,6 @@ public class AgenteAStar extends AbstractPlayer {
     }
 
     private int f(int x, int y) {
-        return this.g[x][y] +
-               (int)(Math.abs(x - this.portal.x) + Math.abs(y - this.portal.y));
+        return this.g[x][y] + (int)(Math.abs(x - this.portal.x) + Math.abs(y - this.portal.y));
     }
 }
