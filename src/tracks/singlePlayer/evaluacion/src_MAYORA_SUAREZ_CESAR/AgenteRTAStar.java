@@ -7,8 +7,7 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
-import java.util.ArrayList;
-import java.util.Stack;
+import java.util.*;
 
 public class AgenteRTAStar extends AbstractPlayer {
     // Scale factor
@@ -38,7 +37,7 @@ public class AgenteRTAStar extends AbstractPlayer {
 
     boolean[][] visited;
 
-    int[][] h;
+    HashMap<Integer, Integer> h;
 
     public static ACTIONS[] EXPANDED_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
 
@@ -53,7 +52,7 @@ public class AgenteRTAStar extends AbstractPlayer {
 
         this.invalid = new boolean[this.nx][this.ny];
 //        this.g = new int[this.nx][this.ny];
-        this.h = new int[this.nx][this.ny];
+        this.h = new HashMap<>();
 //        this.parent = new Vector2d[this.nx][this.ny];
 
         // Default declaration value is false
@@ -78,7 +77,6 @@ public class AgenteRTAStar extends AbstractPlayer {
             int i = (int)Math.floor(aux.position.x / scaleF.x);
             int j = (int)Math.floor(aux.position.y / scaleF.y);
             this.invalid[i][j] = true;
-            this.h[i][j] = Integer.MAX_VALUE;
         }
         //////////////////////////////////////////////////////////////////////
 
@@ -89,27 +87,21 @@ public class AgenteRTAStar extends AbstractPlayer {
         portal.x = Math.floor(portal.x / scaleF.x);
         portal.y = Math.floor(portal.y / scaleF.y);
 
-        // Initialize heuristics
-        for (int i = 0; i < this.nx; ++i) {
-            for (int j = 0; j < this.ny; ++j) {
-                if (!this.invalid[i][j])
-                    this.h[i][j] = manhattanDistance(i, j);
-            }
-        }
-
         this.plan = new Stack<>();
         this.expandedNodes = 0;
-
-        long end = System.nanoTime();
-        System.out.println("Estimated time for constructor: " + (end - start)/1e6 + " ms");
     }
 
     @Override
     public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         // get avatar's current position as current node
-        Vector2d curr = new Vector2d(Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
-                Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
+        Vector2d curr = new Vector2d((int)Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
+                                    (int)Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
         int currX = (int)curr.x, currY = (int)curr.y;
+        int currID = positionID(curr);
+
+        // Starting position
+        if (!this.h.containsKey(currID))
+            this.h.put(currID, manhattanDistance(currX, currY));
 //        this.g[currX][currY] = 0;
 
         // Neighbours of current
@@ -120,22 +112,28 @@ public class AgenteRTAStar extends AbstractPlayer {
         for (ACTIONS action : AgenteRTAStar.EXPANDED_ACTIONS) {
             nextSuccessor(action, next, currX, currY);
             int nextX = (int)next.x, nextY = (int)next.y;
+            int nextID = positionID(next);
+
+            // if it's invalid, don't bother
+            if (this.invalid[nextX][nextY]) {
+                this.h.put(nextID, Integer.MAX_VALUE);
+                continue;
+            }
+
+            if (!this.h.containsKey(nextID))
+                this.h.put(nextID, manhattanDistance(nextX, nextY));
 
             // get the first and second minimum f-value from neighbours
-            if (
-                    // if it's invalid, don't bother
-                    !this.invalid[nextX][nextY]
-                    // update best
-                    && minF > this.h[nextX][nextY] + 1
-            ) {
+            if (minF > this.h.get(nextID) + 1) {
                 secondMinF = minF;
-                minF = this.h[nextX][nextY] + 1;
+                minF = this.h.get(nextID) + 1;
                 bestAction = action;
             }
         }
 
         // update heuristic of current with the second minimum
-        this.h[currX][currY] = (secondMinF == Integer.MAX_VALUE ? minF : secondMinF);
+//        this.h[currX][currY] = (secondMinF == Integer.MAX_VALUE ? minF : secondMinF);
+        this.h.put(currID, (secondMinF == Integer.MAX_VALUE ? minF : secondMinF));
 
         // return action to the best node from current
         return bestAction;
@@ -159,5 +157,9 @@ public class AgenteRTAStar extends AbstractPlayer {
 
     private int manhattanDistance(int x, int y) {
         return (int)(Math.abs(x - this.portal.x) + Math.abs(y - this.portal.y));
+    }
+
+    private int positionID(Vector2d pos) {
+        return ((int)(pos.x) * 100 + (int)(pos.y));
     }
 }
