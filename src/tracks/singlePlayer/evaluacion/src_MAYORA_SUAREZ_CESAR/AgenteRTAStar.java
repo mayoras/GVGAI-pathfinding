@@ -7,7 +7,6 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
-import javax.swing.plaf.nimbus.State;
 import java.util.*;
 
 public class AgenteRTAStar extends AbstractPlayer {
@@ -17,15 +16,18 @@ public class AgenteRTAStar extends AbstractPlayer {
     // Portal/Goal's position
     Vector2d portal;
 
-    // Plan of actions to take in order to reach the portal
-    Stack<ACTIONS> plan;
-
     // Invalid positions are those which player cannot put a foot on (walls, traps, explored cells, ...)
     // plays the role of explored nodes list
     boolean[][] invalid;
 
     // Number of expanded nodes
     int expandedNodes;
+
+    // Length of the path taken by the agent
+    int pathLength;
+
+    // Sum of all nanoseconds taken everytime that computes an action
+    long totalRuntime;
 
     // Map's number of cells per row and column
     int nx, ny;
@@ -70,12 +72,16 @@ public class AgenteRTAStar extends AbstractPlayer {
         portal.x = Math.floor(portal.x / scaleF.x);
         portal.y = Math.floor(portal.y / scaleF.y);
 
-        this.plan = new Stack<>();
         this.expandedNodes = 0;
+        this.pathLength = 0;
+        this.totalRuntime = 0;
     }
 
     @Override
     public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+        // Start timer
+        long start = System.nanoTime();
+
         // get avatar's current position as current node
         Vector2d curr = new Vector2d((int)Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
                                     (int)Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
@@ -102,12 +108,22 @@ public class AgenteRTAStar extends AbstractPlayer {
             int nextID = positionID(next);
 
             // Check if neighbour is the goal, if so just move to it.
-            if (next.x == this.portal.x && next.y == this.portal.y)
+            ++this.expandedNodes;
+            if (next.x == this.portal.x && next.y == this.portal.y) {
+                // Take the runtime of this last breath
+                long end = System.nanoTime();
+                this.totalRuntime += (end - start);
+
+                // Print voyage's information before finishing
+                System.out.println("Runtime: " + this.totalRuntime / 1e6 + " ms");
+                System.out.println("Computed Path length: " + this.pathLength);
+                System.out.println("Nodes expanded: " + this.expandedNodes);
+
                 return action;
+            }
 
             // if it's invalid, don't bother
             if (this.invalid[nextX][nextY]) {
-                this.h.put(nextID, Integer.MAX_VALUE);
                 continue;
             }
 
@@ -121,6 +137,7 @@ public class AgenteRTAStar extends AbstractPlayer {
                 minF = this.h.get(nextID) + 1;
                 bestAction = action;
             }
+            ++this.expandedNodes;
         }
 
         // update heuristic of current with the maximum of { second minimum, h(curr) }
@@ -129,6 +146,13 @@ public class AgenteRTAStar extends AbstractPlayer {
             this.h.put(currID, z);
         }
         this.h.put(currID, z);
+
+        // Increment the path length is being taken
+        ++this.pathLength;
+
+        // Stop timer and add runtime
+        long end = System.nanoTime();
+        this.totalRuntime += (end - start);
 
         // return action to the best node from current
         return bestAction;
