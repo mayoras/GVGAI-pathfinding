@@ -66,7 +66,9 @@ This is likely because the ANT version that is installed with your version of Ec
 
 
 #### TODO
-- Dijkstra: instead of using ArrayList for frontier list, use another more efficient data structure.
+- Dijkstra: instead of using ArrayList for frontier list, use another more efficient data structure. **OK** using boolean matrix
+- A*: instead of using two boolean matrices, use one byte-value matrix, to leverage locality principle (cache).
+- RTA*: when ACTION_NIL, apply replanning.
 
 # References
 How to create custom `hashCode` and `equals` methods:
