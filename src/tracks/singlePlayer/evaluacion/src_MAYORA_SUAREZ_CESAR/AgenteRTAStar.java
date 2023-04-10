@@ -7,6 +7,7 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
+import javax.swing.plaf.nimbus.State;
 import java.util.*;
 
 public class AgenteRTAStar extends AbstractPlayer {
@@ -23,19 +24,11 @@ public class AgenteRTAStar extends AbstractPlayer {
     // plays the role of explored nodes list
     boolean[][] invalid;
 
-    // Matrix of distances/costs of all nodes
-    int[][] g;
-
-    // Matrix of parent's positions of a node. parent[x][y] === parent of node with position (x,y)
-    Vector2d[][] parent;
-
     // Number of expanded nodes
     int expandedNodes;
 
     // Map's number of cells per row and column
     int nx, ny;
-
-    boolean[][] visited;
 
     HashMap<Integer, Integer> h;
 
@@ -51,17 +44,7 @@ public class AgenteRTAStar extends AbstractPlayer {
         this.ny = stateObs.getObservationGrid()[0].length;
 
         this.invalid = new boolean[this.nx][this.ny];
-//        this.g = new int[this.nx][this.ny];
         this.h = new HashMap<>();
-//        this.parent = new Vector2d[this.nx][this.ny];
-
-        // Default declaration value is false
-//        this.visited = new boolean[this.nx][this.ny];
-
-        // Initialize distance/cost matrix
-//        for (int i = 0; i < this.nx; ++i) {
-//            Arrays.fill(this.g[i], Integer.MAX_VALUE);
-//        }
 
         ////////////////// RECORD WALLS & TRAPS POSITIONS /////////////////
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
@@ -99,10 +82,14 @@ public class AgenteRTAStar extends AbstractPlayer {
         int currX = (int)curr.x, currY = (int)curr.y;
         int currID = positionID(curr);
 
+        // Check if the world has changed
+        if (worldHasChanged(stateObs)) {
+            updateInnerWorld(stateObs);
+        }
+
         // Starting position
         if (!this.h.containsKey(currID))
             this.h.put(currID, manhattanDistance(currX, currY));
-//        this.g[currX][currY] = 0;
 
         // Neighbours of current
         Vector2d next = new Vector2d();
@@ -114,12 +101,17 @@ public class AgenteRTAStar extends AbstractPlayer {
             int nextX = (int)next.x, nextY = (int)next.y;
             int nextID = positionID(next);
 
+            // Check if neighbour is the goal, if so just move to it.
+            if (next.x == this.portal.x && next.y == this.portal.y)
+                return action;
+
             // if it's invalid, don't bother
             if (this.invalid[nextX][nextY]) {
                 this.h.put(nextID, Integer.MAX_VALUE);
                 continue;
             }
 
+            // if it's a new undiscovered node, record it's heuristic value h(next)
             if (!this.h.containsKey(nextID))
                 this.h.put(nextID, manhattanDistance(nextX, nextY));
 
@@ -131,9 +123,12 @@ public class AgenteRTAStar extends AbstractPlayer {
             }
         }
 
-        // update heuristic of current with the second minimum
-//        this.h[currX][currY] = (secondMinF == Integer.MAX_VALUE ? minF : secondMinF);
-        this.h.put(currID, (secondMinF == Integer.MAX_VALUE ? minF : secondMinF));
+        // update heuristic of current with the maximum of { second minimum, h(curr) }
+        int z = (secondMinF == Integer.MAX_VALUE ? minF : secondMinF); // if there's only one minimum use it as second
+        if (z > this.h.get(currID)) {
+            this.h.put(currID, z);
+        }
+        this.h.put(currID, z);
 
         // return action to the best node from current
         return bestAction;
@@ -159,7 +154,52 @@ public class AgenteRTAStar extends AbstractPlayer {
         return (int)(Math.abs(x - this.portal.x) + Math.abs(y - this.portal.y));
     }
 
+    // Uniquely identify a position in a grid-world
     private int positionID(Vector2d pos) {
-        return ((int)(pos.x) * 100 + (int)(pos.y));
+        return ((int)(pos.x) * this.ny + (int)(pos.y));
+    }
+
+    private boolean worldHasChanged(StateObservation stateObs) {
+        ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
+        ArrayList<Observation> wallsAux = immPositions[0];
+        ArrayList<Observation> trapsAux = immPositions[1];
+
+        for (Observation aux : wallsAux) {
+            int i = (int)Math.floor(aux.position.x / scaleF.x);
+            int j = (int)Math.floor(aux.position.y / scaleF.y);
+
+            // it is valid a position that shouldn't be, the world has changed!
+            if (!this.invalid[i][j])
+                return true;
+        }
+        for (Observation aux : trapsAux) {
+            int i = (int)Math.floor(aux.position.x / scaleF.x);
+            int j = (int)Math.floor(aux.position.y / scaleF.y);
+
+            // not only the walls are the only things that can appear
+            if (!this.invalid[i][j])
+                return true;
+        }
+
+        return false;
+    }
+
+    private void updateInnerWorld(StateObservation stateObs) {
+        ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
+        ArrayList<Observation> wallsAux = immPositions[0];
+        ArrayList<Observation> trapsAux = immPositions[1];
+
+        for (Observation aux : wallsAux) {
+            int i = (int)Math.floor(aux.position.x / scaleF.x);
+            int j = (int)Math.floor(aux.position.y / scaleF.y);
+
+            this.invalid[i][j] = true;
+        }
+        for (Observation aux : trapsAux) {
+            int i = (int)Math.floor(aux.position.x / scaleF.x);
+            int j = (int)Math.floor(aux.position.y / scaleF.y);
+
+            this.invalid[i][j] = true;
+        }
     }
 }

@@ -28,6 +28,7 @@ public class Test {
 		// My Agents
 		String dijkstraController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.AgenteDijkstra";
 		String aStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.AgenteAStar";
+		String rtaStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.AgenteRTAStar";
 
 		//Load available games
 		String spGamesCollection =  "examples/all_games_sp.csv";
@@ -38,7 +39,7 @@ public class Test {
 		int seed = new Random().nextInt();
 
 		// Game and level to play
-		int gameIdx = 58;
+		int gameIdx = 122;	// labyrinth: 58 - extended: 122
 		int levelIdx = 8; // level names from 0 to 4 (game_lvlN.txt).
 		String gameName = games[gameIdx][1];
 		String game = games[gameIdx][0];
@@ -55,7 +56,7 @@ public class Test {
 //		// 2. This plays a game in a level by the controller.
 //		ArcadeMachine.runOneGame(game, level1, visuals, sampleRHEAController, recordActionsFile, seed, 0);
 
-		ArcadeMachine.runOneGame(game, level1, visuals, aStarController, recordActionsFile, seed, 0);
+		ArcadeMachine.runOneGame(game, level1, visuals, rtaStarController, recordActionsFile, seed, 0);
 
 
 		// 3. This replays a game from an action file previously recorded
