@@ -20,6 +20,9 @@ public class AgenteRTAStar extends AbstractPlayer {
     // plays the role of explored nodes list
     boolean[][] invalid;
 
+    // Num of invalid items
+    int n_invalid;
+
     // Number of expanded nodes
     int expandedNodes;
 
@@ -32,6 +35,7 @@ public class AgenteRTAStar extends AbstractPlayer {
     // Map's number of cells per row and column
     int nx, ny;
 
+    // Hashmap to keep track of heuristics of nodes
     HashMap<Integer, Integer> h;
 
     public static ACTIONS[] EXPANDED_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
@@ -53,6 +57,7 @@ public class AgenteRTAStar extends AbstractPlayer {
         ArrayList<Observation> wallsAux = immPositions[0];
         ArrayList<Observation> trapsAux = immPositions[1];
 
+        this.n_invalid = wallsAux.size() + trapsAux.size();
         for (Observation aux : wallsAux) {
             int i = (int)Math.floor(aux.position.x / scaleF.x);
             int j = (int)Math.floor(aux.position.y / scaleF.y);
@@ -185,27 +190,26 @@ public class AgenteRTAStar extends AbstractPlayer {
 
     private boolean worldHasChanged(StateObservation stateObs) {
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
-        ArrayList<Observation> wallsAux = immPositions[0];
-        ArrayList<Observation> trapsAux = immPositions[1];
 
-        for (Observation aux : wallsAux) {
-            int i = (int)Math.floor(aux.position.x / scaleF.x);
-            int j = (int)Math.floor(aux.position.y / scaleF.y);
+        // If the number of walls and traps changed, then the world has changed!
+        return this.n_invalid != immPositions[0].size() + immPositions[1].size();
 
-            // it is valid a position that shouldn't be, the world has changed!
-            if (!this.invalid[i][j])
-                return true;
-        }
-        for (Observation aux : trapsAux) {
-            int i = (int)Math.floor(aux.position.x / scaleF.x);
-            int j = (int)Math.floor(aux.position.y / scaleF.y);
-
-            // not only the walls are the only things that can appear
-            if (!this.invalid[i][j])
-                return true;
-        }
-
-        return false;
+//        for (Observation aux : wallsAux) {
+//            int i = (int)Math.floor(aux.position.x / scaleF.x);
+//            int j = (int)Math.floor(aux.position.y / scaleF.y);
+//
+//            // it is valid a position that shouldn't be, the world has changed!
+//            if (!this.invalid[i][j])
+//                return true;
+//        }
+//        for (Observation aux : trapsAux) {
+//            int i = (int)Math.floor(aux.position.x / scaleF.x);
+//            int j = (int)Math.floor(aux.position.y / scaleF.y);
+//
+//            // not only the walls are the only things that can appear
+//            if (!this.invalid[i][j])
+//                return true;
+//        }
     }
 
     private void updateInnerWorld(StateObservation stateObs) {
@@ -213,6 +217,7 @@ public class AgenteRTAStar extends AbstractPlayer {
         ArrayList<Observation> wallsAux = immPositions[0];
         ArrayList<Observation> trapsAux = immPositions[1];
 
+        this.n_invalid = wallsAux.size() + trapsAux.size();
         for (Observation aux : wallsAux) {
             int i = (int)Math.floor(aux.position.x / scaleF.x);
             int j = (int)Math.floor(aux.position.y / scaleF.y);
