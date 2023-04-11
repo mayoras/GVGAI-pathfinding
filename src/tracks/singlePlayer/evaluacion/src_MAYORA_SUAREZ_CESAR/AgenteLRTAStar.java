@@ -105,7 +105,6 @@ public class AgenteLRTAStar extends AbstractPlayer {
         // Neighbours of current
         Vector2d next = new Vector2d();
         int minF = Integer.MAX_VALUE;
-        int secondMinF = Integer.MAX_VALUE;
         ACTIONS bestAction = ACTIONS.ACTION_NIL;
         for (ACTIONS action : AgenteLRTAStar.EXPANDED_ACTIONS) {
             nextSuccessor(action, next, currX, currY);
@@ -138,19 +137,16 @@ public class AgenteLRTAStar extends AbstractPlayer {
 
             // get the first and second minimum f-value from neighbours
             if (minF > this.h.get(nextID) + 1) {
-                secondMinF = minF;
                 minF = this.h.get(nextID) + 1;
                 bestAction = action;
             }
             ++this.expandedNodes;
         }
 
-        // update heuristic of current with the maximum of { second minimum, h(curr) }
-        int z = (secondMinF == Integer.MAX_VALUE ? minF : secondMinF); // if there's only one minimum use it as second
-        if (z > this.h.get(currID)) {
-            this.h.put(currID, z);
+        // update heuristic of current with the maximum of { minimum, h(curr) }
+        if (minF > this.h.get(currID)) {
+            this.h.put(currID, minF);
         }
-        this.h.put(currID, z);
 
         // Increment the path length is being taken
         ++this.pathLength;

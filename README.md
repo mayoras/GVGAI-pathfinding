@@ -46,40 +46,38 @@ This is likely because the ANT version that is installed with your version of Ec
 
 ## Measures table:
 
-| Algorithm  | #Map     | Runtime (ms)  | Path length   | Expanded Nodes   |
-|------------|----------|---------------|---------------|------------------|
-|            | Small    | 0.2251        | 36            | 88               |
-| Dijkstra   | Medium   | 1.2930        | 114           | 566              |
-|            | Big      | 1.4034        | 808           | 2144             |
-| ---------  | -------- | ------------  | ------------  | ---------------- |
-|            | Small    | 0.9771        | 36            | 85               |
-| A*         | Medium   | 2.8144        | 114           | 559              |
-|            | Big      | 4.5768        | 808           | 2131             |
-| ---------  | -------- | ------------  | ------------  | ---------------- |
-|            | Small    | 4.7990        | 45            | 280              |
-| RTA*       | Medium   | 75.5947       | 607           | 3739             |
-|            | Big      | Timeout ticks | Timeout ticks | Timeout ticks    |
-| ---------  | -------- | ------------  | ------------  | ---------------- |
-|            | Small    |               |               |                  |
-| LRTA*      | Medium   |               |               |                  |
-|            | Big      |               |               |                  |
-| ---------  | -------- | ------------  | ------------  | ---------------- |
-| EXTENDED   | EXTENDED | EXTENDED      | EXTENDED      | EXTENDED         |
-| ---------  | -------- | ------------  | ------------  | ---------------- |
-|            | Small    | 10.4824       | 96            | 627              |
-| RTA*       | Medium   | 66.0534       | 607           | 3740             |
-|            | Big      | Timeout ticks | Timeout ticks | Timeout ticks    |
-| ---------  | -------- | ------------  | ------------  | ---------------- |
-|            | Small    |               |               |                  |
-| LRTA*      | Medium   |               |               |                  |
-|            | Big      |               |               |                  |
-| ---------  | -------- | ------------  | ------------  | ---------------- |
+| Algorithm  | Map      | Runtime (ms) | Path length  | Expanded Nodes   |
+|------------|----------|--------------|--------------|------------------|
+|            | Small    | 0.2251       | 36           | 88               |
+| Dijkstra   | Medium   | 1.2930       | 114          | 566              |
+|            | Big      | 1.4034       | 808          | 2144             |
+| ---------  | -------- | ------------ | ------------ | ---------------- |
+|            | Small    | 0.9771       | 36           | 85               |
+| A*         | Medium   | 2.8144       | 114          | 559              |
+|            | Big      | 4.5768       | 808          | 2131             |
+| ---------  | -------- | ------------ | ------------ | ---------------- |
+|            | Small    | 4.7990       | 45           | 280              |
+| RTA*       | Medium   | 75.5947      | 607          | 3739             |
+|            | Big      | TE           | TE           | TE               |
+| ---------  | -------- | ------------ | ------------ | ---------------- |
+|            | Small    | 5.5612       | 59           | 364              |
+| LRTA*      | Medium   | 432.1027     | 5657         | 34933            |
+|            | Big      | TE           | TE           | TE               |
+| ---------  | -------- | ------------ | ------------ | ---------------- |
+| EXTENDED   | EXTENDED | EXTENDED     | EXTENDED     | EXTENDED         |
+| ---------  | -------- | ------------ | ------------ | ---------------- |
+|            | Small    | 10.4824      | 96           | 627              |
+| RTA*       | Medium   | 66.0534      | 607          | 3740             |
+|            | Big      | TE           |              |                  |
+| ---------  | -------- | ------------ | ------------ | ---------------- |
+|            | Small    | 14.0393      | 150          | 989              |
+| LRTA*      | Medium   | 415.1707     | 5657         | 34933            |
+|            | Big      | TE           | TE           | TE               |
+| ---------  | -------- | ------------ | ------------ | ---------------- |
 
 
 #### TODO
-- Dijkstra: instead of using ArrayList for frontier list, use another more efficient data structure. **OK** using boolean matrix
-- A*: instead of using two boolean matrices, use one byte-value matrix, to leverage locality principle (cache).
-- RTA*: when ACTION_NIL, apply re-planning.
+- A*: instead of using two boolean matrices, use one byte-value matrix, to leverage locality principle in cache.
 - A* and Dijkstra: change the way of incrementing nodes expanded by incrementing when it checks if current node is goal.
 
 # References
