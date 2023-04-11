@@ -150,7 +150,6 @@ public class AgenteRTAStar extends AbstractPlayer {
         if (z > this.h.get(currID)) {
             this.h.put(currID, z);
         }
-        this.h.put(currID, z);
 
         // Increment the path length is being taken
         ++this.pathLength;
@@ -193,23 +192,6 @@ public class AgenteRTAStar extends AbstractPlayer {
 
         // If the number of walls and traps changed, then the world has changed!
         return this.n_invalid != immPositions[0].size() + immPositions[1].size();
-
-//        for (Observation aux : wallsAux) {
-//            int i = (int)Math.floor(aux.position.x / scaleF.x);
-//            int j = (int)Math.floor(aux.position.y / scaleF.y);
-//
-//            // it is valid a position that shouldn't be, the world has changed!
-//            if (!this.invalid[i][j])
-//                return true;
-//        }
-//        for (Observation aux : trapsAux) {
-//            int i = (int)Math.floor(aux.position.x / scaleF.x);
-//            int j = (int)Math.floor(aux.position.y / scaleF.y);
-//
-//            // not only the walls are the only things that can appear
-//            if (!this.invalid[i][j])
-//                return true;
-//        }
     }
 
     private void updateInnerWorld(StateObservation stateObs) {
