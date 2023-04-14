@@ -129,6 +129,7 @@ public class AgenteAStar extends AbstractPlayer {
             int minDist = this.g[currX][currY];
 
             // check if the current position is goal's
+            ++this.expandedNodes;
             if (currX == this.portal.x && currY == this.portal.y) {
                 break;
             }
@@ -160,7 +161,6 @@ public class AgenteAStar extends AbstractPlayer {
                     frontier.add(new Vector2d(nextX, nextY));
                     this.parent[nextX][nextY] = parent;
                     this.g[nextX][nextY] = minDist + 1;
-                    ++this.expandedNodes;
                 } else if (
                         // it's been not visited and it's not frontier, expand node
                         !this.visited[nextX][nextY]
@@ -169,7 +169,6 @@ public class AgenteAStar extends AbstractPlayer {
                     frontier.add(new Vector2d(nextX, nextY));
                     this.parent[nextX][nextY] = parent;
                     this.g[nextX][nextY] = minDist + 1;
-                    ++this.expandedNodes;
                 } else if (
                         // it's frontier and the cost to get to it is less, update its cost
                         frontier.contains(next)

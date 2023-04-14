@@ -53,10 +53,10 @@ This is likely because the ANT version that is installed with your version of Ec
 |            | Big      | 1.4034       | 808          | 2144             |
 | ---------  | -------- | ------------ | ------------ | ---------------- |
 |            | Small    | 0.9771       | 36           | 85               |
-| A*         | Medium   | 2.8144       | 114          | 559              |
-|            | Big      | 4.5768       | 808          | 2131             |
+| A*         | Medium   | 2.8144       | 114          | 557              |
+|            | Big      | 4.5768       | 808          | 2128             |
 | ---------  | -------- | ------------ | ------------ | ---------------- |
-|            | Small    | 4.7990       | 45           | 280              |
+|            | Small    | 4.7990       | 45           | 184              |
 | RTA*       | Medium   | 75.5947      | 607          | 3739             |
 |            | Big      | TE           | TE           | TE               |
 | ---------  | -------- | ------------ | ------------ | ---------------- |
@@ -75,6 +75,19 @@ This is likely because the ANT version that is installed with your version of Ec
 |            | Big      | TE           | TE           | TE               |
 | ---------  | -------- | ------------ | ------------ | ---------------- |
 
+
+557 2128
+
+RTA*
+41
+339
+3387
+
+LRTA* 61 5659 TE
+
+EXT
+RTA 86 339 3403
+LRTA 152 5659 TE
 
 #### TODO
 - A*: instead of using two boolean matrices, use one byte-value matrix, to leverage locality principle in cache.

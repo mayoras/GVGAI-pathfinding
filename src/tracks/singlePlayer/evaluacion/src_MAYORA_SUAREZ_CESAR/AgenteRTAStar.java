@@ -35,8 +35,8 @@ public class AgenteRTAStar extends AbstractPlayer {
     // Map's number of cells per row and column
     int nx, ny;
 
-    // Hashmap to keep track of heuristics of nodes
-    HashMap<Integer, Integer> h;
+    // Matrix to keep track of heuristics of nodes
+    int[][] h;
 
     public static ACTIONS[] EXPANDED_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
 
@@ -50,7 +50,12 @@ public class AgenteRTAStar extends AbstractPlayer {
         this.ny = stateObs.getObservationGrid()[0].length;
 
         this.invalid = new boolean[this.nx][this.ny];
-        this.h = new HashMap<>();
+        this.h = new int[this.nx][this.ny];
+
+        // Fill default heuristics
+        for (int i = 0; i < this.nx; ++i) {
+            Arrays.fill(this.h[i], -1);
+        }
 
         ////////////////// RECORD WALLS & TRAPS POSITIONS /////////////////
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
@@ -91,7 +96,6 @@ public class AgenteRTAStar extends AbstractPlayer {
         Vector2d curr = new Vector2d((int)Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
                                     (int)Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
         int currX = (int)curr.x, currY = (int)curr.y;
-        int currID = positionID(curr);
 
         // Check if the world has changed
         if (worldHasChanged(stateObs)) {
@@ -99,8 +103,9 @@ public class AgenteRTAStar extends AbstractPlayer {
         }
 
         // Starting position
-        if (!this.h.containsKey(currID))
-            this.h.put(currID, manhattanDistance(currX, currY));
+        if (this.h[currX][currY] < 0) {
+            this.h[currX][currY] = manhattanDistance(currX, currY);
+        }
 
         // Neighbours of current
         Vector2d next = new Vector2d();
@@ -110,7 +115,11 @@ public class AgenteRTAStar extends AbstractPlayer {
         for (ACTIONS action : AgenteRTAStar.EXPANDED_ACTIONS) {
             nextSuccessor(action, next, currX, currY);
             int nextX = (int)next.x, nextY = (int)next.y;
-            int nextID = positionID(next);
+
+            // if it's invalid, don't bother
+            if (this.invalid[nextX][nextY]) {
+                continue;
+            }
 
             // Check if neighbour is the goal, if so just move to it.
             ++this.expandedNodes;
@@ -118,6 +127,9 @@ public class AgenteRTAStar extends AbstractPlayer {
                 // Take the runtime of this last breath
                 long end = System.nanoTime();
                 this.totalRuntime += (end - start);
+
+                // add final node
+                ++this.pathLength;
 
                 // Print voyage's information before finishing
                 System.out.println("Runtime: " + this.totalRuntime / 1e6 + " ms");
@@ -127,29 +139,26 @@ public class AgenteRTAStar extends AbstractPlayer {
                 return action;
             }
 
-            // if it's invalid, don't bother
-            if (this.invalid[nextX][nextY]) {
-                continue;
-            }
-
             // if it's a new undiscovered node, record it's heuristic value h(next)
-            if (!this.h.containsKey(nextID))
-                this.h.put(nextID, manhattanDistance(nextX, nextY));
+            if (this.h[nextX][nextY] < 0)
+                this.h[nextX][nextY] = manhattanDistance(nextX, nextY);
+
 
             // get the first and second minimum f-value from neighbours
-            if (minF > this.h.get(nextID) + 1) {
+            int f = this.h[nextX][nextY] + 1;
+            if (minF > f) {
                 secondMinF = minF;
-                minF = this.h.get(nextID) + 1;
+                minF = f;
                 bestAction = action;
+            } else if (f < secondMinF) {
+                secondMinF = f;
             }
-            ++this.expandedNodes;
         }
 
         // update heuristic of current with the maximum of { second minimum, h(curr) }
         int z = (secondMinF == Integer.MAX_VALUE ? minF : secondMinF); // if there's only one minimum use it as second
-        if (z > this.h.get(currID)) {
-            this.h.put(currID, z);
-        }
+        if (z > this.h[currX][currY])
+            this.h[currX][currY] = z;
 
         // Increment the path length is being taken
         ++this.pathLength;
@@ -180,11 +189,6 @@ public class AgenteRTAStar extends AbstractPlayer {
 
     private int manhattanDistance(int x, int y) {
         return (int)(Math.abs(x - this.portal.x) + Math.abs(y - this.portal.y));
-    }
-
-    // Uniquely identify a position in a grid-world
-    private int positionID(Vector2d pos) {
-        return ((int)(pos.x) * this.ny + (int)(pos.y));
     }
 
     private boolean worldHasChanged(StateObservation stateObs) {
