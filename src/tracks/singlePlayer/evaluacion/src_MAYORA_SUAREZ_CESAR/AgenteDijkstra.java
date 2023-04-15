@@ -168,16 +168,16 @@ public class AgenteDijkstra extends AbstractPlayer {
                 frontier.add(new Vector2d(curr_x + 1, curr_y));
             }
         }
-        // Termina la busqueda, paramos el contador
-        long end = System.nanoTime();
-
-        System.out.println("Runtime: " + (end - start) / 1e6 + " ms");
-        System.out.println("Nodes expanded: " + this.expandedNodes);
 
         // Reconstruir camino
         rebuildPath(curr_x, curr_y);
 
+        // Termina la busqueda, paramos el contador
+        long end = System.nanoTime();
+
+        System.out.println("Runtime: " + (end - start) / 1e6 + " ms");
         System.out.println("Computed path length: " + this.plan.size());
+        System.out.println("Nodes expanded: " + this.expandedNodes);
 
         // Devolvemos el tope del plan
         return this.plan.pop();

@@ -195,16 +195,16 @@ public class AgenteAStar extends AbstractPlayer {
                 }
             }
         }
-        // Termina la busqueda, paramos el contador
-        long end = System.nanoTime();
-
-        System.out.println("Runtime: " + (end - start) / 1e6 + " ms");
-        System.out.println("Nodes expanded: " + this.expandedNodes);
 
         // Reconstruir camino
         rebuildPath(currX, currY);
 
+        // Termina la busqueda, paramos el contador
+        long end = System.nanoTime();
+
+        System.out.println("Runtime: " + (end - start) / 1e6 + " ms");
         System.out.println("Computed path length: " + this.plan.size());
+        System.out.println("Nodes expanded: " + this.expandedNodes);
 
         // Devolvemos el tope del plan
         return this.plan.pop();
