@@ -30,6 +30,7 @@ public class Test {
 		String aStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.AgenteAStar";
 		String rtaStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.AgenteRTAStar";
 		String lrtaStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.AgenteLRTAStar";
+		String competitiveController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.AgenteCompeticion";
 
 		//Load available games
 		String spGamesCollection =  "examples/all_games_sp.csv";
@@ -57,7 +58,7 @@ public class Test {
 //		// 2. This plays a game in a level by the controller.
 //		ArcadeMachine.runOneGame(game, level1, visuals, sampleRHEAController, recordActionsFile, seed, 0);
 
-		ArcadeMachine.runOneGame(game, level1, visuals, lrtaStarController, recordActionsFile, seed, 0);
+		ArcadeMachine.runOneGame(game, level1, visuals, competitiveController, recordActionsFile, seed, 0);
 
 
 		// 3. This replays a game from an action file previously recorded
