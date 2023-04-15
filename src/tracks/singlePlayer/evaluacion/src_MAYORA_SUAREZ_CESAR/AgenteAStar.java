@@ -91,6 +91,7 @@ public class AgenteAStar extends AbstractPlayer {
 
     @Override
     public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+        long start = System.nanoTime();
         // If there's a path, follow it.
         if (!this.plan.empty()) {
             return this.plan.pop();
@@ -109,7 +110,6 @@ public class AgenteAStar extends AbstractPlayer {
         Vector2d next = new Vector2d();
         Vector2d curr = null;
 
-        long start = System.nanoTime();
         while (true) {
             // get curr node, as the one with minimum cost of frontier nodes
             int minF = Integer.MAX_VALUE;
@@ -129,7 +129,7 @@ public class AgenteAStar extends AbstractPlayer {
             int minDist = this.g[currX][currY];
 
             // check if the current position is goal's
-            ++this.expandedNodes;
+            ++this.expandedNodes;       // un nodo al que compruebo si es objetivo, es un nodo expandido
             if (currX == this.portal.x && currY == this.portal.y) {
                 break;
             }
@@ -180,7 +180,7 @@ public class AgenteAStar extends AbstractPlayer {
         }
         long end = System.nanoTime();
 
-        System.out.println("Runtime - AStar : " + (end - start) / 1e6 + " ms");
+        System.out.println("Runtime: " + (end - start) / 1e6 + " ms");
         System.out.println("Nodes expanded: " + this.expandedNodes);
 
         // Reconstruct path

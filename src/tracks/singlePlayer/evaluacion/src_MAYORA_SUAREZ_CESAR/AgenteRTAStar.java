@@ -97,6 +97,9 @@ public class AgenteRTAStar extends AbstractPlayer {
                                     (int)Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
         int currX = (int)curr.x, currY = (int)curr.y;
 
+        // El nodo actual es un nodo que ha sido expandido (Guion seccion 6)
+        ++this.expandedNodes;
+
         // Check if the world has changed
         if (worldHasChanged(stateObs)) {
             updateInnerWorld(stateObs);
@@ -122,16 +125,17 @@ public class AgenteRTAStar extends AbstractPlayer {
             }
 
             // Check if neighbour is the goal, if so just move to it.
-            ++this.expandedNodes;
             if (next.x == this.portal.x && next.y == this.portal.y) {
-                // Take the runtime of this last breath
+                ++this.expandedNodes;       // Sumamos el ultimo nodo de expandidos antes de ir al objetivo
+
+                // Agregar el tiempo restante
                 long end = System.nanoTime();
                 this.totalRuntime += (end - start);
 
-                // add final node
+                // agregar el ultimo nodo final a la longitud del camino
                 ++this.pathLength;
 
-                // Print voyage's information before finishing
+                // Imprimir la informacion del recorrido antes de marcharse
                 System.out.println("Runtime: " + this.totalRuntime / 1e6 + " ms");
                 System.out.println("Computed Path length: " + this.pathLength);
                 System.out.println("Nodes expanded: " + this.expandedNodes);
