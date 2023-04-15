@@ -10,54 +10,55 @@ import tools.Vector2d;
 import java.util.*;
 
 public class AgenteRTAStar extends AbstractPlayer {
-    // Scale factor
+    // Factor de escala
     Vector2d scaleF;
 
-    // Portal/Goal's position
+    // Posicion del portal
     Vector2d portal;
 
-    // Invalid positions are those which player cannot put a foot on (walls, traps, explored cells, ...)
-    // plays the role of explored nodes list
+    // Matrix booleana de posiciones invalidas.
+    // Posiciones invalidas son las posiciones en las que el jugador no puede poner un pie (paredes y trampas)
     boolean[][] invalid;
 
-    // Num of invalid items
+    // Numero de casillas invalidas
     int n_invalid;
 
-    // Number of expanded nodes
+    // Numero de nodos expandidos
     int expandedNodes;
 
-    // Length of the path taken by the agent
+    // Longitud del camino que esta tomando el agente
     int pathLength;
 
-    // Sum of all nanoseconds taken everytime that computes an action
+    // Runtime acumulado en nanosegundos que toma el agente hacia el portal
     long totalRuntime;
 
-    // Map's number of cells per row and column
+    // Numero de celdas por fila y columna
     int nx, ny;
 
-    // Matrix to keep track of heuristics of nodes
+    // Matrix de valores heuristicos
     int[][] h;
 
+    // Acciones que puede tomar el agente
     public static ACTIONS[] EXPANDED_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
 
     public AgenteRTAStar(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-        long start = System.nanoTime();
+        // Inicializamos el factor de escala
         this.scaleF = new Vector2d((float)stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
                 (float)stateObs.getWorldDimension().height / stateObs.getObservationGrid()[0].length);
 
-
+        // Obtenemos la cantidad de casillas de ancho y alto
         this.nx = stateObs.getObservationGrid().length;
         this.ny = stateObs.getObservationGrid()[0].length;
 
         this.invalid = new boolean[this.nx][this.ny];
         this.h = new int[this.nx][this.ny];
 
-        // Fill default heuristics
+        // Valor heuristico por defecto -> -1
         for (int i = 0; i < this.nx; ++i) {
             Arrays.fill(this.h[i], -1);
         }
 
-        ////////////////// RECORD WALLS & TRAPS POSITIONS /////////////////
+        ////////////////// Guardar las posiciones de las paredes y trampas /////////////////
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
         ArrayList<Observation> wallsAux = immPositions[0];
         ArrayList<Observation> trapsAux = immPositions[1];
@@ -75,13 +76,14 @@ public class AgenteRTAStar extends AbstractPlayer {
         }
         //////////////////////////////////////////////////////////////////////
 
-        // get portal/goal position
+        // Guardar la posicion del portal
         ArrayList<Observation>[] positions = stateObs.getPortalsPositions(stateObs.getAvatarPosition());
 
         portal = positions[0].get(0).position;
         portal.x = Math.floor(portal.x / scaleF.x);
         portal.y = Math.floor(portal.y / scaleF.y);
 
+        // Plan inicial vacio, 0 nodos expandidos y longitud inicial 0
         this.expandedNodes = 0;
         this.pathLength = 0;
         this.totalRuntime = 0;
@@ -89,10 +91,10 @@ public class AgenteRTAStar extends AbstractPlayer {
 
     @Override
     public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-        // Start timer
+        // Inicializo el contador del act
         long start = System.nanoTime();
 
-        // get avatar's current position as current node
+        // Obtener la posicion inicial del avatar
         Vector2d curr = new Vector2d((int)Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
                                     (int)Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
         int currX = (int)curr.x, currY = (int)curr.y;
@@ -100,31 +102,30 @@ public class AgenteRTAStar extends AbstractPlayer {
         // El nodo actual es un nodo que ha sido expandido (Guion seccion 6)
         ++this.expandedNodes;
 
-        // Check if the world has changed
+        // Comprobar si el mundo ha cambiado (Labyrinth Extended)
         if (worldHasChanged(stateObs)) {
             updateInnerWorld(stateObs);
         }
 
-        // Starting position
+        // Inicializar el valor heuristico del nodo inicial
         if (this.h[currX][currY] < 0) {
             this.h[currX][currY] = manhattanDistance(currX, currY);
         }
 
-        // Neighbours of current
+        // Expandir el nodo actual
         Vector2d next = new Vector2d();
         int minF = Integer.MAX_VALUE;
         int secondMinF = Integer.MAX_VALUE;
         ACTIONS bestAction = ACTIONS.ACTION_NIL;
         for (ACTIONS action : AgenteRTAStar.EXPANDED_ACTIONS) {
+            // Obtenemos el nuevo sucesor. Modificamos next
             nextSuccessor(action, next, currX, currY);
             int nextX = (int)next.x, nextY = (int)next.y;
 
-            // if it's invalid, don't bother
-            if (this.invalid[nextX][nextY]) {
-                continue;
-            }
+            // si es una pared o trampa ni te molestes, ignoralo
+            if (this.invalid[nextX][nextY]) continue;
 
-            // Check if neighbour is the goal, if so just move to it.
+            // Comprobar si el vecino es el objetivo, si es asi, entonces ir hacia el
             if (next.x == this.portal.x && next.y == this.portal.y) {
                 ++this.expandedNodes;       // Sumamos el ultimo nodo de expandidos antes de ir al objetivo
 
@@ -143,12 +144,12 @@ public class AgenteRTAStar extends AbstractPlayer {
                 return action;
             }
 
-            // if it's a new undiscovered node, record it's heuristic value h(next)
+            // si es un nuevo nodo no descubierto, calcular y almacenar su heuristica h(next)
             if (this.h[nextX][nextY] < 0)
                 this.h[nextX][nextY] = manhattanDistance(nextX, nextY);
 
 
-            // get the first and second minimum f-value from neighbours
+            // Obtener el primer y segundo valor f minimo de los vecinos
             int f = this.h[nextX][nextY] + 1;
             if (minF > f) {
                 secondMinF = minF;
@@ -159,23 +160,32 @@ public class AgenteRTAStar extends AbstractPlayer {
             }
         }
 
-        // update heuristic of current with the maximum of { second minimum, h(curr) }
-        int z = (secondMinF == Integer.MAX_VALUE ? minF : secondMinF); // if there's only one minimum use it as second
+        // actualizar la heuristica del nodo actual como el maximo de { 2do minimo valor f, h(actual) }
+        int z = (secondMinF == Integer.MAX_VALUE ? minF : secondMinF); // si solo hay un minimo usarlo
         if (z > this.h[currX][currY])
             this.h[currX][currY] = z;
 
-        // Increment the path length is being taken
+        // Incrementar la longitud the camino tomado
         ++this.pathLength;
 
-        // Stop timer and add runtime
+        // Parar el temporizador y acumular runtime
         long end = System.nanoTime();
         this.totalRuntime += (end - start);
 
-        // return action to the best node from current
+        // tomar la mejor accion
         return bestAction;
     }
 
+    /**
+     * @brief Obtener proximo sucesor a expandir
+     * @param action    accion que toma el padre
+     * @param next      posicion del siguiente nodo
+     * @param currX     coordenada x del nodo actual
+     * @param currY     coordenada y del nodo actual
+     * @implNote el metodo modifica el parametro next
+     */
     private void nextSuccessor(ACTIONS action, Vector2d next, int currX, int currY) {
+        // Para cada accion posible actualizamos la posicion correspondiente del nodo actual
         if (action == ACTIONS.ACTION_UP) {
             next.x = currX;
             next.y = currY - 1;
@@ -191,23 +201,43 @@ public class AgenteRTAStar extends AbstractPlayer {
         }
     }
 
+    /**
+     * @brief       Calcular distancia Manhattan de un nodo n al portal
+     * @param x     coordenada x del nodo n
+     * @param y     coordenada y del nodo n
+     * @return      devuelve la distancia Manhattan del nodo n al portal
+     */
     private int manhattanDistance(int x, int y) {
         return (int)(Math.abs(x - this.portal.x) + Math.abs(y - this.portal.y));
     }
 
+    /**
+     * @brief           Comprobar si la representacion del mundo ha cambiado
+     * @param stateObs  Estado de observacion del juego
+     * @return          True si ha cambiado el mundo, False de lo contrario
+     */
     private boolean worldHasChanged(StateObservation stateObs) {
+        // Obtener paredes y trampas
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
 
-        // If the number of walls and traps changed, then the world has changed!
+        // si el numero de paredes y trampas cambiaron, entonces el mundo ha cambiado!
         return this.n_invalid != immPositions[0].size() + immPositions[1].size();
     }
 
+    /**
+     * @brief           Actualizar la representacion del mundo del agente
+     * @param stateObs  Estado de observacion del juego
+     * @implNote se modifica el atributo miembro this.invalid
+     */
     private void updateInnerWorld(StateObservation stateObs) {
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
         ArrayList<Observation> wallsAux = immPositions[0];
         ArrayList<Observation> trapsAux = immPositions[1];
 
+        // Aumentamos el numero de casillas invalidas
         this.n_invalid = wallsAux.size() + trapsAux.size();
+
+        // Marcamos como casillas invalidas las paredes y trampas //
         for (Observation aux : wallsAux) {
             int i = (int)Math.floor(aux.position.x / scaleF.x);
             int j = (int)Math.floor(aux.position.y / scaleF.y);

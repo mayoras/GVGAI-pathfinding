@@ -12,56 +12,57 @@ import java.util.Arrays;
 import java.util.Stack;
 
 public class AgenteAStar extends AbstractPlayer {
-    // Scale factor
+    // Factor de escala
     Vector2d scaleF;
 
-    // Portal/Goal's position
+    // Posicion del portal
     Vector2d portal;
 
-    // Plan of actions to take in order to reach the portal
+    // Plan de acciones a tomar para llegar al portal
     Stack<ACTIONS> plan;
 
-    // Invalid positions are those which player cannot put a foot on (walls, traps, explored cells, ...)
-    // plays the role of explored nodes list
+    // Matrix booleana de posiciones invalidas.
+    // Posiciones invalidas son las posiciones en las que el jugador no puede poner un pie (paredes y trampas)
     boolean[][] invalid;
 
-    // Matrix of distances/costs of all nodes
+    // Matrix de distancias/costes de todos los nodos
     int[][] g;
 
-    // Matrix of parent's positions of a node. parent[x][y] === parent of node with position (x,y)
+    // Matrix de las posiciones de los padres de los nodos. parent[x][y] === padre del nodo con pos. (x,y)
     Vector2d[][] parent;
 
-    // Number of expanded nodes
+    // Numero de nodos expandidos
     int expandedNodes;
 
-    // Map's number of cells per row and column
+    // Numero de celdas por fila y columna
     int nx, ny;
 
+    // Matrix booleana de nodos visitados/explorados
     boolean[][] visited;
 
+    // Acciones que puede tomar el agente
     public static ACTIONS[] EXPANDED_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
 
     public AgenteAStar(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+        // Inicializamos el factor de escala
         this.scaleF = new Vector2d((float)stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
                 (float)stateObs.getWorldDimension().height / stateObs.getObservationGrid()[0].length);
 
-
+        // Obtenemos la cantidad de casillas de ancho y alto
         this.nx = stateObs.getObservationGrid().length;
         this.ny = stateObs.getObservationGrid()[0].length;
 
         this.invalid = new boolean[this.nx][this.ny];
         this.g = new int[this.nx][this.ny];
         this.parent = new Vector2d[this.nx][this.ny];
+        this.visited = new boolean[this.nx][this.ny];   // por defecto todos los valores son false
 
-        // Default declaration value is false
-        this.visited = new boolean[this.nx][this.ny];
-
-        // Initialize distance/cost matrix
+        // Inicializar la matrix de distancias/costes a infinito
         for (int i = 0; i < this.nx; ++i) {
             Arrays.fill(this.g[i], Integer.MAX_VALUE);
         }
 
-        ////////////////// RECORD WALLS & TRAPS POSITIONS /////////////////
+        ////////////////// Guardar las posiciones de las paredes y trampas  /////////////////
         ArrayList<Observation>[] immPositions = stateObs.getImmovablePositions();
         ArrayList<Observation> wallsAux = immPositions[0];
         ArrayList<Observation> trapsAux = immPositions[1];
@@ -78,40 +79,45 @@ public class AgenteAStar extends AbstractPlayer {
         }
         //////////////////////////////////////////////////////////////////////
 
-        // get portal/goal position
+        // Guardar la posicion del portal
         ArrayList<Observation>[] positions = stateObs.getPortalsPositions(stateObs.getAvatarPosition());
 
         portal = positions[0].get(0).position;
         portal.x = Math.floor(portal.x / scaleF.x);
         portal.y = Math.floor(portal.y / scaleF.y);
 
+        // Plan inicial vacio y 0 nodos expandidos
         this.plan = new Stack<>();
         this.expandedNodes = 0;
     }
 
     @Override
     public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+        // Inicializo el contador del act
         long start = System.nanoTime();
-        // If there's a path, follow it.
+
+        // Si hay un plan no vacio, obtener la siguiente accion a tomar
         if (!this.plan.empty()) {
             return this.plan.pop();
         }
 
-        // get avatar's starting position and initialize its cost to 0
+        // Obtener la posicion inicial del avatar
         Vector2d avatar = new Vector2d(Math.floor(stateObs.getAvatarPosition().x / scaleF.x),
                                         Math.floor(stateObs.getAvatarPosition().y / scaleF.y));
+        // inicializar su coste a 0
         this.g[(int)avatar.x][(int)avatar.y] = 0;
 
-        int currX, currY;
+        // Inicializar lista de abiertos/fronteras
         ArrayList<Vector2d> frontier = new ArrayList<>(this.nx * this.ny);
-        // add starting node to frontier list
+
+        // Agregar nodo inicial a abiertos
         frontier.add(avatar);
 
         Vector2d next = new Vector2d();
         Vector2d curr = null;
-
+        int currX, currY;
         while (true) {
-            // get curr node, as the one with minimum cost of frontier nodes
+            // Obtenemos el nodo actual como el que tiene minimo valor f entre todos los nodos abiertos
             int minF = Integer.MAX_VALUE;
             currX = -1;
             currY = -1;
@@ -119,6 +125,7 @@ public class AgenteAStar extends AbstractPlayer {
                 int f_x = (int)f_node.x;
                 int f_y = (int)f_node.y;
                 // if the f=g+h heuristic value of node is minimum and its position is valid
+                // el valor f=g+h del nodo y su posicion es valida
                 if (!this.invalid[f_x][f_y] && minF > f(f_x, f_y)) {
                     minF = f(f_x, f_y);
                     currX = f_x;
@@ -126,51 +133,61 @@ public class AgenteAStar extends AbstractPlayer {
                     curr = f_node;
                 }
             }
+            // Obtenemos ademas el coste minimo del actual
             int minDist = this.g[currX][currY];
 
-            // check if the current position is goal's
-            ++this.expandedNodes;       // un nodo al que compruebo si es objetivo, es un nodo expandido
+            // Comprobar si actual es el objetivo
+            ++this.expandedNodes;       // un nodo al que compruebo si es objetivo, es un nodo expandido (Guion seccion 6)
             if (currX == this.portal.x && currY == this.portal.y) {
                 break;
             }
 
-            // node is visited, therefore an invalid position for not going backwards
+            // Nodo es visitado y removido de abiertos
             this.visited[currX][currY] = true;
             frontier.remove(curr);
 
-            //////////// Expand node //////////
+            //////////// Expandir nodo //////////
 
-            // save the position of parent
+            // Para todos los nodos hijo, su padre es el actual
             Vector2d parent = new Vector2d(currX, currY);
 
+            // Para cada sucesor
             for (ACTIONS action : AgenteAStar.EXPANDED_ACTIONS) {
+                // Obtenemos el nuevo sucesor. Modificamos next
                 nextSuccessor(action, next, currX, currY);
 
                 int nextX = (int)next.x;
                 int nextY = (int)next.y;
 
-                // if it's a wall or trap, don't expand
+                // si es una pared o trampa ni te molestes, ignoralo
                 if (this.invalid[nextX][nextY]) continue;
 
                 if (
-                        // it's been visited and less cost, we found a better path to get this node (Judea Pearl approach)
+                        // si ha sido visitda y tiene menor costo, hemos encontrado un mejor camino para llegar a este nodo
+                        // (aproximacion de Judea Pearl)
                         this.visited[nextX][nextY]
                         && this.g[nextX][nextY] > minDist + 1
                 ) {
+                    // sacamos el nodo de visitados y lo metemos de nuevo en abiertos
                     this.visited[nextX][nextY] = false;
                     frontier.add(new Vector2d(nextX, nextY));
+
+                    // actualizamos mejor padre y su coste
                     this.parent[nextX][nextY] = parent;
                     this.g[nextX][nextY] = minDist + 1;
                 } else if (
-                        // it's been not visited and it's not frontier, expand node
+                        // si no ha sido visitado y no esta en abiertos, situacion normal, expandir nodo
                         !this.visited[nextX][nextY]
                         && !frontier.contains(next)
                 ) {
+                    // Agregamos nuevo nodo a abiertos
                     frontier.add(new Vector2d(nextX, nextY));
+
+                    // actualizamos mejor padre y su coste
                     this.parent[nextX][nextY] = parent;
                     this.g[nextX][nextY] = minDist + 1;
                 } else if (
-                        // it's frontier and the cost to get to it is less, update its cost
+                        // esta en abiertos y el coste es menor, se ha encontrado mejor padre en la expansion, actualiza el coste
                         frontier.contains(next)
                         && this.g[nextX][nextY] > minDist + 1
                 ) {
@@ -178,20 +195,31 @@ public class AgenteAStar extends AbstractPlayer {
                 }
             }
         }
+        // Termina la busqueda, paramos el contador
         long end = System.nanoTime();
 
         System.out.println("Runtime: " + (end - start) / 1e6 + " ms");
         System.out.println("Nodes expanded: " + this.expandedNodes);
 
-        // Reconstruct path
+        // Reconstruir camino
         rebuildPath(currX, currY);
 
         System.out.println("Computed path length: " + this.plan.size());
 
+        // Devolvemos el tope del plan
         return this.plan.pop();
     }
 
+    /**
+     * @brief Obtener proximo sucesor a expandir
+     * @param action    accion que toma el padre
+     * @param next      posicion del siguiente nodo
+     * @param currX     coordenada x del nodo actual
+     * @param currY     coordenada y del nodo actual
+     * @implNote el metodo modifica el parametro next
+     */
     private void nextSuccessor(ACTIONS action, Vector2d next, int currX, int currY) {
+        // Para cada accion posible actualizamos la posicion correspondiente del nodo actual
         if (action == ACTIONS.ACTION_UP) {
             next.x = currX;
             next.y = currY - 1;
@@ -208,41 +236,49 @@ public class AgenteAStar extends AbstractPlayer {
     }
 
     /**
-     * @brief Rebuild the path to get to the portal
-     * @param goal_x portal's x coordinate
-     * @param goal_y portal's y coordinate
+     * @brief Reconstruir el camino al portal
+     * @param goal_x coordenada x del portal
+     * @param goal_y coordenada y del portal
      */
     private void rebuildPath(int goal_x, int goal_y) {
         int curr_x = goal_x;
         int curr_y = goal_y;
+
+        // Recorremos todos los padres infiriendo la accion que hizo el nodo padre
         while (true) {
             Vector2d parent = this.parent[curr_x][curr_y];
 
-            // Starting node
+            // Nodo inicial no tiene padre
             if (parent == null)
                 break;
 
-            // infer parent's action from parent-child position's difference
+            // Inferir la accion del padre de la diferencia en la posicion padre-hijo
             if (parent.y > curr_y) {
-                // up
+                // ARRIBA
                 this.plan.push(ACTIONS.ACTION_UP);
             } else if (parent.y < curr_y) {
-                // down
+                // ABAJO
                 this.plan.push(ACTIONS.ACTION_DOWN);
             } else if (parent.x > curr_x) {
-                // left
+                // IZQUIERDA
                 this.plan.push(ACTIONS.ACTION_LEFT);
             } else if (parent.x < curr_x) {
-                // right
+                // DERECHA
                 this.plan.push(ACTIONS.ACTION_RIGHT);
             }
 
-            // go backwards
+            // Seguimos hacia atras
             curr_x = (int)parent.x;
             curr_y = (int)parent.y;
         }
     }
 
+    /**
+     * @brief   Calcular la funcion f=g+h para un nodo n
+     * @param x coordenada x del nodo n
+     * @param y coordenada y del nodo n
+     * @return suma del coste del nodo inicial al nodo n y la distancia Manhattan del nodo n al objetivo
+     */
     private int f(int x, int y) {
         return this.g[x][y] + (int)(Math.abs(x - this.portal.x) + Math.abs(y - this.portal.y));
     }
