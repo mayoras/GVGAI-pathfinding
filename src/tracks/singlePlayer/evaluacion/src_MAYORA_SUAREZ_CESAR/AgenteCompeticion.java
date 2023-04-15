@@ -111,7 +111,6 @@ public class AgenteCompeticion extends AbstractPlayer {
 
         // Comprobar si el mundo ha cambiado (Labyrinth Extended)
         if (worldHasChanged(stateObs)) {
-            System.out.println("world changed");
             updateInnerWorld(stateObs);
 
             // Necesitamos replanificar
