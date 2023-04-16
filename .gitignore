@@ -60,3 +60,4 @@ examples/super_secret
 src/META-INF/MANIFEST.MF
 src/rs/META-INF/MANIFEST.MF
 gvgai/.*pid*
+*_tmp.txt
