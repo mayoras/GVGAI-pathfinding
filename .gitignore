@@ -62,3 +62,4 @@ src/rs/META-INF/MANIFEST.MF
 gvgai/.*pid*
 *_tmp.txt
 heur*.txt
+*.png
