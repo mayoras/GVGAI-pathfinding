@@ -24,6 +24,7 @@ public class Pregunta4 {
     public static void main(String[] args) {
         String rtaStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.pregunta4.AgenteRTAStarP4";
         String lrtaStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.pregunta4.AgenteLRTAStarP4";
+        String aStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.pregunta4.AgenteAStarP4";
 
         // cargamos los juegos
         String spGamesCollection =  "examples/all_games_sp.csv";
@@ -38,6 +39,7 @@ public class Pregunta4 {
         String gameName = games[gameIdx][1];
         String game = games[gameIdx][0];
         String level_tmp = game.replace(gameName, gameName + "_tmp");
+        String level_original = game.replace(gameName, gameName + "_lvl" + levelIdx);
 
         ////////////////// Copiar el mapa del laberinto nivel 6 ////////////////////
         try {
@@ -60,7 +62,7 @@ public class Pregunta4 {
         // Obtener un vector de posiciones aleatorias para posicionar al jugador
         ArrayList<Vector2d> randomPositions = getRandomValidPositions(validPositions, seed);
 
-        // Por cada posicion aleatoria, ejecutamos el algoritmo RTA*
+        //////// Por cada posicion aleatoria, ejecutamos el algoritmo RTA* y guardamos los valores heuristicos /////////
         for (Vector2d randPos : randomPositions) {
             // Elegimos una posicion al azar
             // Modificamos el mapa cambiando la posicion del avatar a la posicion nueva
@@ -69,7 +71,7 @@ public class Pregunta4 {
             // Ejecutar algoritmo, con la nueva posicion
             ArcadeMachine.runOneGame(game, level_tmp, false, rtaStarController, null, seed, 0);
         }
-        // Por cada posicion aleatoria ejecutamos el algoritmo LRTA*
+        //////// Por cada posicion aleatoria, ejecutamos el algoritmo LRTA* y guardamos los valores heuristicos /////////
         for (Vector2d randPos : randomPositions) {
             // Elegimos una posicion al azar
             // Modificamos el mapa cambiando la posicion del avatar a la posicion nueva
@@ -78,6 +80,8 @@ public class Pregunta4 {
             // Ejecutar algoritmo, con la nueva posicion
             ArcadeMachine.runOneGame(game, level_tmp, false, lrtaStarController, null, seed, 0);
         }
+        /////////////// Ejecutamos A* y obtenemos los valores heuristicos //////////////////
+        ArcadeMachine.runOneGame(game, level_original, false, aStarController, null, seed, 0);
     }
 
     public static ArrayList<String> generateRowList() {
