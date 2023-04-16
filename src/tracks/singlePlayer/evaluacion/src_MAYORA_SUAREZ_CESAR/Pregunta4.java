@@ -22,7 +22,8 @@ public class Pregunta4 {
     public BufferedWriter writer;
     public BufferedReader reader;
     public static void main(String[] args) {
-        String rtaStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.AgenteRTAStar";
+        String rtaStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.pregunta4.AgenteRTAStarP4";
+        String lrtaStarController = "tracks.singlePlayer.evaluacion.src_MAYORA_SUAREZ_CESAR.pregunta4.AgenteLRTAStarP4";
 
         // cargamos los juegos
         String spGamesCollection =  "examples/all_games_sp.csv";
@@ -60,15 +61,22 @@ public class Pregunta4 {
         ArrayList<Vector2d> randomPositions = getRandomValidPositions(validPositions, seed);
 
         // Por cada posicion aleatoria, ejecutamos el algoritmo RTA*
-        for (int i = 0; i < randomPositions.size(); ++i) {
+        for (Vector2d randPos : randomPositions) {
             // Elegimos una posicion al azar
-            Vector2d randPos = randomPositions.get(i);
-
             // Modificamos el mapa cambiando la posicion del avatar a la posicion nueva
             changeAvatarPosition(randPos, rows);
 
             // Ejecutar algoritmo, con la nueva posicion
             ArcadeMachine.runOneGame(game, level_tmp, false, rtaStarController, null, seed, 0);
+        }
+        // Por cada posicion aleatoria ejecutamos el algoritmo LRTA*
+        for (Vector2d randPos : randomPositions) {
+            // Elegimos una posicion al azar
+            // Modificamos el mapa cambiando la posicion del avatar a la posicion nueva
+            changeAvatarPosition(randPos, rows);
+
+            // Ejecutar algoritmo, con la nueva posicion
+            ArcadeMachine.runOneGame(game, level_tmp, false, lrtaStarController, null, seed, 0);
         }
     }
 
@@ -82,6 +90,7 @@ public class Pregunta4 {
             while ((line = reader.readLine()) != null) {
                 rows.add(line);
             }
+            reader.close();
             return rows;
         } catch (IOException e) {
             System.out.println("---ERROR in generateRowList---");
