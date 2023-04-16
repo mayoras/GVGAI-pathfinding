@@ -8,7 +8,6 @@ import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class AgenteRTAStarP4 extends AbstractPlayer {
