@@ -325,11 +325,7 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
 
     public int[][] createNewHeuristicsFile(File file) {
         try {
-            if (file.createNewFile()) {
-                System.out.println("File created successfully.");
-            } else {
-                System.out.println("File already exists.");
-            }
+            file.createNewFile();
         } catch (IOException e) {
             System.out.println("---ERROR in createNewFile---");
             e.printStackTrace();

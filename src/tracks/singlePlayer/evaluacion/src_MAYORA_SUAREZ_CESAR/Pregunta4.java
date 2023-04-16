@@ -16,6 +16,7 @@ import java.util.Random;
 public class Pregunta4 {
     public static final String MAP_FILEPATH = "./examples/gridphysics/labyrinth_lvl6.txt";
     public static final String TEMP_MAP_FILEPATH = "./examples/gridphysics/labyrinth_tmp.txt";
+    public static final String SCRIPT_FILENAME = "./src/tracks/singlePlayer/evaluacion/src_MAYORA_SUAREZ_CESAR/pregunta4/heatmaps.py";
     public static final int NUM_EXECUTIONS = 100;
 
     public String[][] map;
@@ -39,7 +40,6 @@ public class Pregunta4 {
         String gameName = games[gameIdx][1];
         String game = games[gameIdx][0];
         String level_tmp = game.replace(gameName, gameName + "_tmp");
-        String level_original = game.replace(gameName, gameName + "_lvl" + levelIdx);
 
         ////////////////// Copiar el mapa del laberinto nivel 6 ////////////////////
         try {
@@ -80,8 +80,38 @@ public class Pregunta4 {
             // Ejecutar algoritmo, con la nueva posicion
             ArcadeMachine.runOneGame(game, level_tmp, false, lrtaStarController, null, seed, 0);
         }
-        /////////////// Ejecutamos A* y obtenemos los valores heuristicos //////////////////
-        ArcadeMachine.runOneGame(game, level_original, false, aStarController, null, seed, 0);
+        /////////////// Obtenemos los valores heuristicos con A* //////////////////
+        for (Vector2d randPos : randomPositions) {
+            // Elegimos una posicion al azar
+            // Modificamos el mapa cambiando la posicion del avatar a la posicion nueva
+            changeAvatarPosition(randPos, rows);
+
+            // Ejecutar algoritmo, con la nueva posicion
+            ArcadeMachine.runOneGame(game, level_tmp, false, aStarController, null, seed, 0);
+        }
+
+        /////////////// Generar heatmaps //////////////
+        // Ejecutamos el script de Python para generar las imagenes
+        String[] command = new String[]{"python3", SCRIPT_FILENAME};
+        ProcessBuilder pb = new ProcessBuilder(command);
+
+        // Lanzamos un proceso que ejecute el script
+        try {
+            System.out.println("Generating Heatmaps...");
+            Process process = pb.start();
+
+            // Esperamos a que acabe y recuperamos su codigo de estado
+            try {
+                int _status = process.waitFor();
+                System.out.println("Heatmaps generated.");
+            } catch (InterruptedException e) {
+                System.out.println("---ERROR in process.waitFor---");
+            }
+        } catch (IOException e) {
+            System.out.println("---ERROR in start child process---");
+        }
+
+        /////////////// Remover ficheros auxiliares utilizados //////////////
     }
 
     public static ArrayList<String> generateRowList() {

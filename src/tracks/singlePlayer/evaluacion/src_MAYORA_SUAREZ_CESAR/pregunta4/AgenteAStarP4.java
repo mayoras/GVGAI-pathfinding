@@ -7,10 +7,7 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Stack;
@@ -69,20 +66,14 @@ public class AgenteAStarP4 extends AbstractPlayer {
 
         File file = new File(HEUR_FILEPATH);
         if (file.exists()) {
-            // Borrar y crear fichero de nuevo
-            if (!file.delete()) {
-                System.out.println("---ERROR in file.delete---");
-            }
-
-            this.h = createNewHeuristicsFile(file);
+            this.h = readHeuristicsFile();
         } else {
-            // Crear nuevo fichero
             this.h = createNewHeuristicsFile(file);
-        }
 
-        // Valor heuristico por defecto -> -1
-        for (int i = 0; i < this.ny; ++i) {
-            Arrays.fill(this.h[i], -1);
+            // Valor heuristico por defecto -> -1
+            for (int i = 0; i < this.ny; ++i) {
+                Arrays.fill(this.h[i], -1);
+            }
         }
 
         ////////////////// Guardar las posiciones de las paredes y trampas  /////////////////
@@ -313,6 +304,37 @@ public class AgenteAStarP4 extends AbstractPlayer {
         return this.g[x][y] + manhattanDistance(x, y);
     }
 
+    public int[][] readHeuristicsFile() {
+        int[][] heur = new int[this.ny][this.nx];
+
+        // Abrimos y leemos de fichero
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(HEUR_FILEPATH));
+
+            // Leemos cada linea almacenando cada fila en la matrix de heuristicas
+            String line;
+            int row = 0;
+            while ((line = reader.readLine()) != null) {
+                String[] rowValues = line.split(",");
+
+                for (int i = 0; i < rowValues.length; ++i) {
+                    String val = rowValues[i];
+                    int h = Integer.parseInt(val);
+                    heur[row][i] = h;
+                }
+
+                ++row;
+            }
+
+            reader.close();
+        } catch (IOException e) {
+            System.out.println("---ERROR in BufferedReader---");
+            e.printStackTrace();
+        }
+
+        return heur;
+    }
+
     public void writeToHeuristicsFile() {
         try {
             // Creamos un descriptor para sobreescribir en el fichero
@@ -341,11 +363,7 @@ public class AgenteAStarP4 extends AbstractPlayer {
 
     public int[][] createNewHeuristicsFile(File file) {
         try {
-            if (file.createNewFile()) {
-                System.out.println("File created successfully.");
-            } else {
-                System.out.println("File already exists.");
-            }
+            file.createNewFile();
         } catch (IOException e) {
             System.out.println("---ERROR in createNewFile---");
             e.printStackTrace();
