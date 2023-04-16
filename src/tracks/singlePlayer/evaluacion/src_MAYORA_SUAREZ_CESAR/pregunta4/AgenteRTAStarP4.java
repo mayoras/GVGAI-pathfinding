@@ -7,10 +7,8 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class AgenteRTAStarP4 extends AbstractPlayer {
@@ -61,19 +59,14 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
 
         File file = new File(HEUR_FILEPATH);
         if (file.exists()) {
-            System.out.println("File exists");
-//            this.h = readHeuristicsFile();
-//            System.exit(0);
-            this.h = new int[this.ny][this.nx];
+            this.h = readHeuristicsFile();
         } else {
-            System.out.println("File does not exist. Creating new heur_rta.txt file");
-
             this.h = createNewHeuristicsFile(file);
-        }
 
-        // Valor heuristico por defecto -> -1
-        for (int i = 0; i < this.ny; ++i) {
-            Arrays.fill(this.h[i], -1);
+            // Valor heuristico por defecto -> -1
+            for (int i = 0; i < this.ny; ++i) {
+                Arrays.fill(this.h[i], -1);
+            }
         }
 
         ////////////////// Guardar las posiciones de las paredes y trampas /////////////////
@@ -127,7 +120,8 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
 
         // Inicializar el valor heuristico del nodo inicial
         if (this.h[currY][currX] < 0) {
-            this.h[currY][currX] = manhattanDistance(currY, currX);
+            // Trasponemos las coordenadas x,y a y,x para que la matrix h vaya acorde a los puntos del mapa
+            this.h[currY][currX] = manhattanDistance(currX, currY);
         }
 
         // Expandir el nodo actual
@@ -154,10 +148,12 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
                 // agregar el ultimo nodo final a la longitud del camino
                 ++this.pathLength;
 
-                // Imprimir la informacion del recorrido antes de marcharse
-                System.out.println("Runtime: " + this.totalRuntime / 1e6 + " ms");
-                System.out.println("Computed Path length: " + this.pathLength);
-                System.out.println("Nodes expanded: " + this.expandedNodes);
+                // Para tener informacion heuristica completa del grafo antes de guardar en disco,
+                // asignamos heuristica 0 al nodo objetivo
+                this.h[nextY][nextX] = 0;
+
+                // Sobreescribimos los valores heuristicos en disco antes de terminar
+                writeToHeuristicsFile();
 
                 return action;
             }
@@ -270,10 +266,62 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
         }
     }
 
-//    public int[][] readHeuristicsFile() {
-//
-//        int[][] heur = new int[this.nx][this.ny];
-//    }
+    public int[][] readHeuristicsFile() {
+        int[][] heur = new int[this.ny][this.nx];
+
+        // Abrimos y leemos de fichero
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(HEUR_FILEPATH));
+
+            // Leemos cada linea almacenando cada fila en la matrix de heuristicas
+            String line;
+            int row = 0;
+            while ((line = reader.readLine()) != null) {
+                String[] rowValues = line.split(",");
+
+                for (int i = 0; i < rowValues.length; ++i) {
+                    String val = rowValues[i];
+                    int h = Integer.parseInt(val);
+                    heur[row][i] = h;
+                }
+
+                ++row;
+            }
+
+            reader.close();
+        } catch (IOException e) {
+            System.out.println("---ERROR in BufferedReader---");
+            e.printStackTrace();
+        }
+
+        return heur;
+    }
+
+    public void writeToHeuristicsFile() {
+        try {
+            // Creamos un descriptor para sobreescribir en el fichero
+            BufferedWriter writer = new BufferedWriter(new FileWriter(HEUR_FILEPATH, false));
+
+            for (int i = 0; i < this.ny; ++i) {
+                // Serializamos una fila de valores
+                ArrayList<String> row = new ArrayList<>();
+                for (int j = 0; j < this.nx; ++j) {
+                    String hVal = String.valueOf(this.h[i][j]);
+                    row.add(hVal);
+                }
+
+                // Escribimos la fila como una linea de valores separadas por comas
+                String line = String.join(",", row);
+                writer.write(line);
+                writer.newLine();
+            }
+
+            writer.close();
+        } catch (IOException e) {
+            System.out.println("---ERROR in BufferedWriter---");
+            e.printStackTrace();
+        }
+    }
 
     public int[][] createNewHeuristicsFile(File file) {
         try {
