@@ -112,6 +112,19 @@ public class Pregunta4 {
         }
 
         /////////////// Remover ficheros auxiliares utilizados //////////////
+        File astar = new File("/home/cam/Classes/TSI/prac/GVGAI-pathfinding/src/tracks/singlePlayer/evaluacion/src_MAYORA_SUAREZ_CESAR/pregunta4/heur_astar.txt");
+        File rta = new File("/home/cam/Classes/TSI/prac/GVGAI-pathfinding/src/tracks/singlePlayer/evaluacion/src_MAYORA_SUAREZ_CESAR/pregunta4/heur_rta.txt");
+        File lrta = new File("/home/cam/Classes/TSI/prac/GVGAI-pathfinding/src/tracks/singlePlayer/evaluacion/src_MAYORA_SUAREZ_CESAR/pregunta4/heur_lrta.txt");
+        File lab_temp = new File("/home/cam/Classes/TSI/prac/GVGAI-pathfinding/examples/gridphysics/labyrinth_tmp.txt");
+
+        if (astar.exists())
+            astar.delete();
+        if (rta.exists())
+            rta.delete();
+        if (lrta.exists())
+            lrta.delete();
+        if (lab_temp.exists())
+            lab_temp.delete();
     }
 
     public static ArrayList<String> generateRowList() {
