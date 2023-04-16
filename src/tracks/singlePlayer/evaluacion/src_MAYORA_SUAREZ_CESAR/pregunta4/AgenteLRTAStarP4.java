@@ -15,7 +15,7 @@ public class AgenteLRTAStarP4 extends AbstractPlayer {
     // Acciones que puede tomar el agente
     public static ACTIONS[] EXPANDED_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
 
-    // File to path that contains heuristic information
+    // Fichero que contiene la informacion heuristica del agente
     public static String HEUR_FILEPATH = "./src/tracks/singlePlayer/evaluacion/src_MAYORA_SUAREZ_CESAR/pregunta4/heur_lrta.txt";
 
     // Factor de escala
