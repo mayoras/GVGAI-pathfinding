@@ -7,9 +7,19 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 public class AgenteRTAStarP4 extends AbstractPlayer {
+    // Acciones que puede tomar el agente
+    public static ACTIONS[] EXPANDED_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
+
+    // File to path that contains heuristic information
+    public static String HEUR_FILEPATH = "./src/tracks/singlePlayer/evaluacion/src_MAYORA_SUAREZ_CESAR/pregunta4/heur_rta.txt";
+
     // Factor de escala
     Vector2d scaleF;
 
@@ -38,9 +48,6 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
     // Matrix de valores heuristicos
     int[][] h;
 
-    // Acciones que puede tomar el agente
-    public static ACTIONS[] EXPANDED_ACTIONS = {ACTIONS.ACTION_UP, ACTIONS.ACTION_DOWN, ACTIONS.ACTION_LEFT, ACTIONS.ACTION_RIGHT};
-
     public AgenteRTAStarP4(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         // Inicializamos el factor de escala
         this.scaleF = new Vector2d((float)stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
@@ -51,10 +58,21 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
         this.ny = stateObs.getObservationGrid()[0].length;
 
         this.invalid = new boolean[this.nx][this.ny];
-        this.h = new int[this.nx][this.ny];
+
+        File file = new File(HEUR_FILEPATH);
+        if (file.exists()) {
+            System.out.println("File exists");
+//            this.h = readHeuristicsFile();
+//            System.exit(0);
+            this.h = new int[this.ny][this.nx];
+        } else {
+            System.out.println("File does not exist. Creating new heur_rta.txt file");
+
+            this.h = createNewHeuristicsFile(file);
+        }
 
         // Valor heuristico por defecto -> -1
-        for (int i = 0; i < this.nx; ++i) {
+        for (int i = 0; i < this.ny; ++i) {
             Arrays.fill(this.h[i], -1);
         }
 
@@ -108,8 +126,8 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
         }
 
         // Inicializar el valor heuristico del nodo inicial
-        if (this.h[currX][currY] < 0) {
-            this.h[currX][currY] = manhattanDistance(currX, currY);
+        if (this.h[currY][currX] < 0) {
+            this.h[currY][currX] = manhattanDistance(currY, currX);
         }
 
         // Expandir el nodo actual
@@ -145,12 +163,12 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
             }
 
             // si es un nuevo nodo no descubierto, calcular y almacenar su heuristica h(next)
-            if (this.h[nextX][nextY] < 0)
-                this.h[nextX][nextY] = manhattanDistance(nextX, nextY);
+            if (this.h[nextY][nextX] < 0)
+                this.h[nextY][nextX] = manhattanDistance(nextX, nextY);
 
 
             // Obtener el primer y segundo valor f minimo de los vecinos
-            int f = this.h[nextX][nextY] + 1;
+            int f = this.h[nextY][nextX] + 1;
             if (minF > f) {
                 secondMinF = minF;
                 minF = f;
@@ -162,8 +180,8 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
 
         // actualizar la heuristica del nodo actual como el maximo de { 2do minimo valor f, h(actual) }
         int z = (secondMinF == Integer.MAX_VALUE ? minF : secondMinF); // si solo hay un minimo usarlo
-        if (z > this.h[currX][currY])
-            this.h[currX][currY] = z;
+        if (z > this.h[currY][currX])
+            this.h[currY][currX] = z;
 
         // Incrementar la longitud the camino tomado
         ++this.pathLength;
@@ -250,5 +268,25 @@ public class AgenteRTAStarP4 extends AbstractPlayer {
 
             this.invalid[i][j] = true;
         }
+    }
+
+//    public int[][] readHeuristicsFile() {
+//
+//        int[][] heur = new int[this.nx][this.ny];
+//    }
+
+    public int[][] createNewHeuristicsFile(File file) {
+        try {
+            if (file.createNewFile()) {
+                System.out.println("File created successfully.");
+            } else {
+                System.out.println("File already exists.");
+            }
+        } catch (IOException e) {
+            System.out.println("---ERROR in createNewFile---");
+            e.printStackTrace();
+        }
+        // Retornamos una matrix correspondiente a los valores heuristicos de cada punto del mapa
+        return new int[this.ny][this.nx];
     }
 }
