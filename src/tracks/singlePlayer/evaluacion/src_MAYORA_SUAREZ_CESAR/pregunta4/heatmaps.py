@@ -11,8 +11,6 @@ HEATMAP_RTA_FILENAME = "/home/cam/Classes/TSI/prac/GVGAI-pathfinding/src/tracks/
 HEATMAP_LRTA_FILENAME = "/home/cam/Classes/TSI/prac/GVGAI-pathfinding/src/tracks/singlePlayer/evaluacion/src_MAYORA_SUAREZ_CESAR/lrta_heatmap.png"
 HEATMAP_ASTAR_FILENAME = "/home/cam/Classes/TSI/prac/GVGAI-pathfinding/src/tracks/singlePlayer/evaluacion/src_MAYORA_SUAREZ_CESAR/astar_heatmap.png"
 
-# INF = 900
-
 
 def gen_heatmap_as_png(dst_path, src_path, title):
     # Leemos la matrix de valores heuristicos de src_path
@@ -24,7 +22,7 @@ def gen_heatmap_as_png(dst_path, src_path, title):
             for val in line:
                 h_values.append(int(val))
             z.append(h_values)
-        z = np.array(z, dtype=np.int32)
+        z = np.array(z, dtype=np.float32)
 
     # Defino los parametros del mapa
     xmin, xmax, ymin, ymax = 0, 16, 0, 14
