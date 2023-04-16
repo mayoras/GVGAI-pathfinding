@@ -5,19 +5,16 @@ import tools.Vector2d;
 import tracks.ArcadeMachine;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 
 public class Pregunta4 {
     public static final String MAP_FILEPATH = "./examples/gridphysics/labyrinth_lvl6.txt";
     public static final String TEMP_MAP_FILEPATH = "./examples/gridphysics/labyrinth_tmp.txt";
     public static final String SCRIPT_FILENAME = "./src/tracks/singlePlayer/evaluacion/src_MAYORA_SUAREZ_CESAR/pregunta4/heatmaps.py";
-    public static final int NUM_EXECUTIONS = 100;
 
     public String[][] map;
     public BufferedWriter writer;
@@ -36,7 +33,6 @@ public class Pregunta4 {
 
         // Jugamos al juego labyrinth, mapa 6
         int gameIdx = 58;
-        int levelIdx = 6; // level names from 0 to 4 (game_lvlN.txt).
         String gameName = games[gameIdx][1];
         String game = games[gameIdx][0];
         String level_tmp = game.replace(gameName, gameName + "_tmp");
@@ -59,32 +55,29 @@ public class Pregunta4 {
         // Obtener todas las posiciones validas
         ArrayList<Vector2d> validPositions = getValidPosition(rows);
 
-        // Obtener un vector de posiciones aleatorias para posicionar al jugador
-        ArrayList<Vector2d> randomPositions = getRandomValidPositions(validPositions, seed);
-
         //////// Por cada posicion aleatoria, ejecutamos el algoritmo RTA* y guardamos los valores heuristicos /////////
-        for (Vector2d randPos : randomPositions) {
+        for (Vector2d pos : validPositions) {
             // Elegimos una posicion al azar
             // Modificamos el mapa cambiando la posicion del avatar a la posicion nueva
-            changeAvatarPosition(randPos, rows);
+            changeAvatarPosition(pos, rows);
 
             // Ejecutar algoritmo, con la nueva posicion
             ArcadeMachine.runOneGame(game, level_tmp, false, rtaStarController, null, seed, 0);
         }
         //////// Por cada posicion aleatoria, ejecutamos el algoritmo LRTA* y guardamos los valores heuristicos /////////
-        for (Vector2d randPos : randomPositions) {
+        for (Vector2d pos : validPositions) {
             // Elegimos una posicion al azar
             // Modificamos el mapa cambiando la posicion del avatar a la posicion nueva
-            changeAvatarPosition(randPos, rows);
+            changeAvatarPosition(pos, rows);
 
             // Ejecutar algoritmo, con la nueva posicion
             ArcadeMachine.runOneGame(game, level_tmp, false, lrtaStarController, null, seed, 0);
         }
         /////////////// Obtenemos los valores heuristicos con A* //////////////////
-        for (Vector2d randPos : randomPositions) {
+        for (Vector2d pos : validPositions) {
             // Elegimos una posicion al azar
             // Modificamos el mapa cambiando la posicion del avatar a la posicion nueva
-            changeAvatarPosition(randPos, rows);
+            changeAvatarPosition(pos, rows);
 
             // Ejecutar algoritmo, con la nueva posicion
             ArcadeMachine.runOneGame(game, level_tmp, false, aStarController, null, seed, 0);
@@ -133,6 +126,7 @@ public class Pregunta4 {
             ArrayList<String> rows = new ArrayList<>();
             BufferedReader reader = new BufferedReader(new FileReader(TEMP_MAP_FILEPATH));
 
+            // Añadir las linea que corresponde a una fila del mapa
             String line;
             while ((line = reader.readLine()) != null) {
                 rows.add(line);
@@ -153,28 +147,13 @@ public class Pregunta4 {
             String row = rows.get(i);
             for (int j = 0; j < row.length(); ++j) {
                 char c = row.charAt(j);
+                // es valida la posicion si es un . o A
                 if (c == '.' || c == 'A') {
                     validPositions.add(new Vector2d(i, j));
                 }
             }
         }
         return validPositions;
-    }
-
-    public static ArrayList<Vector2d> getRandomValidPositions(ArrayList<Vector2d> validPositions, long seed) {
-        ArrayList<Vector2d> randomPositions = new ArrayList<>();
-
-        // Defino el rango de valores
-        int min = 0, max = validPositions.size() - 1;
-
-        // Genero una posicion aleatoria del avatar tantas veces como ejecuciones se realizaran
-        Random random = new Random(seed);
-        for (int i = 0; i < NUM_EXECUTIONS; ++i) {
-            // https://stackoverflow.com/questions/363681/how-do-i-generate-random-integers-within-a-specific-range-in-java#363692
-            int randomIdx = random.nextInt(max - min + 1) + min;
-            randomPositions.add(validPositions.get(randomIdx));
-        }
-        return randomPositions;
     }
 
     public static void changeAvatarPosition(Vector2d pos, ArrayList<String> rows) {
