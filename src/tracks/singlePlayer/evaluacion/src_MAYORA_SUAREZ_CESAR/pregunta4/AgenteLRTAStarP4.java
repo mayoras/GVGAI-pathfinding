@@ -127,7 +127,6 @@ public class AgenteLRTAStarP4 extends AbstractPlayer {
         // Expandir el nodo actual
         Vector2d next = new Vector2d();
         int minF = Integer.MAX_VALUE;
-        int secondMinF = Integer.MAX_VALUE;
         ACTIONS bestAction = ACTIONS.ACTION_NIL;
         for (ACTIONS action : AgenteLRTAStarP4.EXPANDED_ACTIONS) {
             // Obtenemos el nuevo sucesor. Modificamos next
@@ -166,15 +165,12 @@ public class AgenteLRTAStarP4 extends AbstractPlayer {
             // Obtener el primer y segundo valor f minimo de los vecinos
             int f = this.h[nextY][nextX] + 1;
             if (minF > f) {
-                secondMinF = minF;
                 minF = f;
                 bestAction = action;
-            } else if (f < secondMinF) {
-                secondMinF = f;
             }
         }
 
-        // actualizar la heuristica del nodo actual como el maximo de { 2do minimo valor f, h(actual) }
+        // actualizar la heuristica del nodo actual como el maximo de { minimo valor f, h(actual) }
         if (minF > this.h[currY][currX])
             this.h[currY][currX] = minF;
 
